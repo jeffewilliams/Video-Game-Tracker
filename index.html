@@ -1929,6 +1929,43 @@
         let steamGamesCache = [];
         let steamAppListCache = null;
         
+        // Date helper functions to prevent timezone issues
+        // When a date input has value "2025-01-15", we want to store exactly "2025-01-15"
+        // NOT shift it based on timezone
+        
+        function dateInputToString(dateInputValue) {
+            // Date input values are already in YYYY-MM-DD format
+            // Just return them as-is, don't convert to Date object
+            return dateInputValue || null;
+        }
+        
+        function dateStringToInputValue(dateString) {
+            // Convert stored date string back to input format
+            // If it's already YYYY-MM-DD, return as-is
+            if (!dateString) return '';
+            
+            // If it's an ISO string (2025-01-15T00:00:00.000Z), extract just the date part
+            if (dateString.includes('T')) {
+                return dateString.split('T')[0];
+            }
+            
+            return dateString;
+        }
+        
+        function formatDateForDisplay(dateString) {
+            // For displaying dates to user (not for input fields)
+            if (!dateString) return 'N/A';
+            
+            // Parse the date string as local date (not UTC)
+            const parts = dateString.split('T')[0].split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1; // Months are 0-indexed
+            const day = parseInt(parts[2]);
+            
+            const date = new Date(year, month, day);
+            return date.toLocaleDateString();
+        }
+        
         // Default tag suggestions
         const defaultTags = [
             'Action', 'RPG', 'Strategy', 'Puzzle', 'Platformer', 'Shooter',
@@ -2091,8 +2128,12 @@
             // Check daily for new releases
             setInterval(checkUpcomingReleases, 24 * 60 * 60 * 1000);
             
-            // Set today's date as default for session
-            document.getElementById('session-date').valueAsDate = new Date();
+            // Set today's date as default for session (in local timezone)
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('session-date').value = `${year}-${month}-${day}`;
 
             // Watch for image URL changes
             document.getElementById('game-cover').addEventListener('input', function() {
@@ -2488,7 +2529,7 @@
             // Filter completed by selected year
             const completedFiltered = completedYearFilter === 'all' ? completed : completed.filter(g => {
                 if (!g.dateFinished) return false;
-                return new Date(g.dateFinished).getFullYear() === parseInt(completedYearFilter);
+                return getYearFromDateString(g.dateFinished) === parseInt(completedYearFilter);
             });
             
             // Render each section
@@ -2618,7 +2659,7 @@
                     filtered.sort((a, b) => a.title.localeCompare(b.title));
                     break;
                 case 'recent':
-                    filtered.sort((a, b) => new Date(b.addedDate) - new Date(a.addedDate));
+                    filtered.sort((a, b) => compareDateStrings(a.addedDate, b.addedDate));
                     break;
                 case 'recently-played':
                     filtered.sort((a, b) => {
@@ -2730,7 +2771,7 @@
                     if (game.sessions) {
                         game.sessions.forEach(session => {
                             if (session.date) {
-                                const sessionYear = new Date(session.date).getFullYear();
+                                const sessionYear = getYearFromDateString(session.date);
                                 if (sessionYear === year) {
                                     gamesPlayedThisYear.add(game.id);
                                     totalSessions++;
@@ -2746,7 +2787,7 @@
                 // Spent: sum of games added in that year
                 games.forEach(game => {
                     if (game.dateAddedToLibrary) {
-                        const addedYear = new Date(game.dateAddedToLibrary).getFullYear();
+                        const addedYear = getYearFromDateString(game.dateAddedToLibrary);
                         if (addedYear === year) {
                             totalSpent += getTotalPrice(game);
                         }
@@ -2769,7 +2810,7 @@
             const years = new Set();
             
             completedGames.forEach(game => {
-                const year = new Date(game.dateFinished).getFullYear();
+                const year = getYearFromDateString(game.dateFinished);
                 years.add(year);
             });
             
@@ -2853,16 +2894,16 @@
                     title: document.getElementById('game-title').value,
                     platform: platform,
                     storefront: platform === 'PC' ? storefront : '',
-                    releaseDate: document.getElementById('game-release-date').value,
-                    dateAddedToLibrary: document.getElementById('game-date-added').value,
+                    releaseDate: dateInputToString(document.getElementById('game-release-date').value),
+                    dateAddedToLibrary: dateInputToString(document.getElementById('game-date-added').value),
                     price: document.getElementById('game-price').value,
                     free: document.getElementById('game-free').checked,
                     ownership: document.getElementById('game-ownership').value,
                     status: document.getElementById('game-status').value,
                     priority: document.getElementById('game-priority').value,
                     tags: currentGameTags.slice(), // Copy the array
-                    dateStarted: document.getElementById('game-started').value,
-                    dateFinished: document.getElementById('game-finished').value,
+                    dateStarted: dateInputToString(document.getElementById('game-started').value),
+                    dateFinished: dateInputToString(document.getElementById('game-finished').value),
                     rating: parseInt(document.getElementById('game-rating').value),
                     notes: document.getElementById('game-notes').value,
                     cover: currentImageData || document.getElementById('game-cover').value,
@@ -2947,7 +2988,7 @@
                             </div>
                             <div class="meta-item">
                                 <div class="meta-label">Release Date</div>
-                                <div class="meta-value">${game.releaseDate ? new Date(game.releaseDate).toLocaleDateString() : 'N/A'}</div>
+                                <div class="meta-value">${formatDateForDisplay(game.releaseDate)}</div>
                             </div>
                             <div class="meta-item">
                                 <div class="meta-label">Purchase Price</div>
@@ -2960,12 +3001,12 @@
                             ${game.dateStarted ? `
                             <div class="meta-item">
                                 <div class="meta-label">Started</div>
-                                <div class="meta-value">${new Date(game.dateStarted).toLocaleDateString()}</div>
+                                <div class="meta-value">${formatDateForDisplay(game.dateStarted)}</div>
                             </div>` : ''}
                             ${game.dateFinished ? `
                             <div class="meta-item">
                                 <div class="meta-label">Finished</div>
-                                <div class="meta-value">${new Date(game.dateFinished).toLocaleDateString()}</div>
+                                <div class="meta-value">${formatDateForDisplay(game.dateFinished)}</div>
                             </div>` : ''}
                             <div class="meta-item">
                                 <div class="meta-label">Total Playtime</div>
@@ -2995,7 +3036,7 @@
                                     <div class="dlc-info">
                                         <div class="dlc-name">${dlc.name}</div>
                                         <div class="dlc-meta">
-                                            ${dlc.releaseDate ? `Released: ${new Date(dlc.releaseDate).toLocaleDateString()}` : ''}
+                                            ${dlc.releaseDate ? `Released: ${formatDateForDisplay(dlc.releaseDate)}` : ''}
                                             ${dlc.price ? ` • $${parseFloat(dlc.price).toFixed(2)}` : ''}
                                         </div>
                                         ${dlc.notes ? `<div class="dlc-meta" style="margin-top: 5px;">${dlc.notes}</div>` : ''}
@@ -3013,17 +3054,12 @@
                         <div class="session-list">
                             ${[...game.sessions].sort((a, b) => {
                                 // Sort by date, most recent first
-                                const dateA = new Date(a.date);
-                                const dateB = new Date(b.date);
-                                return dateB - dateA;
+                                return compareDateStrings(a.date, b.date);
                             }).map(session => {
-                                // Fix timezone issue by parsing date without time component
-                                const dateParts = session.date.split('-');
-                                const displayDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
                                 return `
                                 <div class="session-card">
                                     <div class="session-header">
-                                        <span class="session-date">${displayDate.toLocaleDateString()}</span>
+                                        <span class="session-date">${formatDateForDisplay(session.date)}</span>
                                         <div style="display: flex; gap: 5px; align-items: center;">
                                             <span class="session-duration">${session.duration ? `${session.duration}h` : ''}</span>
                                             <button onclick="editSession('${session.id}')" class="session-edit-btn" title="Edit">✏️</button>
@@ -3081,8 +3117,8 @@
             const pcSelected = platform === 'PC';
             document.getElementById('storefront-group').style.display = pcSelected ? 'block' : 'none';
             
-            document.getElementById('game-release-date').value = game.releaseDate || '';
-            document.getElementById('game-date-added').value = game.dateAddedToLibrary || '';
+            document.getElementById('game-release-date').value = dateStringToInputValue(game.releaseDate);
+            document.getElementById('game-date-added').value = dateStringToInputValue(game.dateAddedToLibrary);
             document.getElementById('game-price').value = game.price || '';
             document.getElementById('game-free').checked = game.free || false;
             document.getElementById('game-ownership').value = game.ownership || '';
@@ -3097,8 +3133,8 @@
             updateSelectedTagsDisplay();
             updateTagSuggestionsDisplay();
             
-            document.getElementById('game-started').value = game.dateStarted || '';
-            document.getElementById('game-finished').value = game.dateFinished || '';
+            document.getElementById('game-started').value = dateStringToInputValue(game.dateStarted);
+            document.getElementById('game-finished').value = dateStringToInputValue(game.dateFinished);
             document.getElementById('game-rating').value = game.rating || 0;
             document.getElementById('game-notes').value = game.notes || '';
             
@@ -3142,7 +3178,7 @@
             const dlc = {
                 id: Date.now().toString(),
                 name: document.getElementById('dlc-name').value,
-                releaseDate: document.getElementById('dlc-release-date').value,
+                releaseDate: dateInputToString(document.getElementById('dlc-release-date').value),
                 price: document.getElementById('dlc-price').value,
                 notes: document.getElementById('dlc-notes').value
             };
@@ -3169,7 +3205,12 @@
         function showAddSessionModal() {
             currentEditSessionId = null; // Clear edit mode
             document.getElementById('session-form').reset();
-            document.getElementById('session-date').valueAsDate = new Date();
+            // Set to today's date in local timezone (YYYY-MM-DD format)
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('session-date').value = `${year}-${month}-${day}`;
             document.getElementById('session-modal').classList.add('active');
         }
 
@@ -3225,7 +3266,9 @@
             today.setHours(0, 0, 0, 0);
             
             const upcomingHtml = wishlistGames.map(game => {
-                const releaseDate = new Date(game.releaseDate);
+                // Parse date string without timezone conversion
+                const [year, month, day] = game.releaseDate.split('-');
+                const releaseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                 const daysUntil = Math.ceil((releaseDate - today) / (1000 * 60 * 60 * 24));
                 const isPast = daysUntil < 0;
                 const isToday = daysUntil === 0;
@@ -3251,7 +3294,7 @@
                         <div style="flex: 1;">
                             <h3 style="margin: 0 0 8px 0; color: #fff;">${game.title}</h3>
                             <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                                <span style="color: #9ab;"><strong>${releaseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></span>
+                                <span style="color: #9ab;"><strong>${formatDateForDisplay(game.releaseDate)}</strong></span>
                                 ${dateStatus}
                                 ${game.platform ? `<span style="color: #678;">• ${game.platform}</span>` : ''}
                                 ${game.price ? `<span style="color: #678;">• $${parseFloat(game.price).toFixed(2)}</span>` : ''}
@@ -3373,6 +3416,28 @@
         // Show help for cover art feature
         // Tag and Priority Management
         let currentGameTags = [];
+
+        // Date helper functions to prevent timezone issues
+        // Dates from input fields are YYYY-MM-DD strings - keep them as strings!
+        function formatDateForDisplay(dateString) {
+            if (!dateString) return 'N/A';
+            // Parse YYYY-MM-DD without timezone conversion
+            const [year, month, day] = dateString.split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function getYearFromDateString(dateString) {
+            if (!dateString) return null;
+            return parseInt(dateString.split('-')[0]);
+        }
+
+        function compareDateStrings(dateA, dateB) {
+            // Compare YYYY-MM-DD strings directly without Date conversion
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB.localeCompare(dateA); // Descending
+        }
 
         function initializeTagSuggestions() {
             const container = document.getElementById('tag-suggestions');
@@ -4091,7 +4156,7 @@
             if (!game.sessions) game.sessions = [];
 
             const sessionData = {
-                date: document.getElementById('session-date').value,
+                date: dateInputToString(document.getElementById('session-date').value),
                 duration: document.getElementById('session-duration').value,
                 progress: document.getElementById('session-progress').value,
                 notes: document.getElementById('session-notes').value
@@ -4128,7 +4193,7 @@
 
             currentEditSessionId = sessionId;
             
-            document.getElementById('session-date').value = session.date;
+            document.getElementById('session-date').value = dateStringToInputValue(session.date);
             document.getElementById('session-duration').value = session.duration || '';
             document.getElementById('session-progress').value = session.progress || '';
             document.getElementById('session-notes').value = session.notes || '';
