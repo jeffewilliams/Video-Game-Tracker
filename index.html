@@ -1410,7 +1410,7 @@
                                 <rect x="75" y="25" width="20" height="8" fill="#b380d3" rx="2"/>
                             </g>
                         </svg>
-                        <span>Game Library</span>
+                        <span id="main-title">Game Library</span>
                     </h1>
                     <div class="user-info">
                         <span class="user-email" id="user-email"></span>
@@ -1454,7 +1454,8 @@
     <div class="container">
         <div class="controls">
             <button onclick="showAddGameModal()">+ Add Game</button>
-            <button onclick="showSteamImport()" class="secondary" id="steam-import-btn">Import from Steam</button>
+            <button onclick="showListsPage()" class="secondary">📋 My Lists</button>
+            <button onclick="toggleBulkSelection()" class="secondary" id="bulk-select-btn">☑️ Bulk Select</button>
             <button onclick="showUpcomingReleases()" class="secondary">📅 Upcoming Releases</button>
             <button id="filter-toggle-btn" onclick="toggleFilters()" style="display: none;">🔍 Show Filters</button>
             <div class="filter-controls" id="filter-controls">
@@ -1490,12 +1491,61 @@
             </div>
         </div>
 
+        <!-- Lists Page View (hidden by default) -->
+        <div id="lists-page-view" style="display: none;">
+            <!-- All Lists View -->
+            <div id="all-lists-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <button onclick="showGamesPage()" class="secondary">← Back to Games</button>
+                    <button onclick="showCreateListModal()">+ Create New List</button>
+                </div>
+                
+                <div id="lists-grid" style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                    <!-- Lists will be rendered here -->
+                </div>
+            </div>
+            
+            <!-- Single List View -->
+            <div id="single-list-view" style="display: none;">
+                <div id="list-view-header"></div>
+                <div id="list-view-games"></div>
+            </div>
+        </div>
+
+        <!-- Game Library View (shown by default) -->
+        <div id="games-page-view">
+
         <!-- Playing Now Section -->
         <div class="section-header">
             <h2>🎮 Currently Playing</h2>
             <span class="section-count" id="playing-count">0 games</span>
         </div>
         <div id="playing-grid" class="game-grid"></div>
+
+        <!-- Bulk Action Toolbar (hidden by default) -->
+        <div id="bulk-toolbar" style="display: none; position: sticky; top: 0; z-index: 100; background: #1a1f29; border: 2px solid #00c030; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="color: #fff; font-weight: 600;">
+                    <span id="selected-count">0</span> games selected
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <select id="bulk-status-select" style="padding: 8px 12px;">
+                        <option value="">Change Status...</option>
+                        <option value="playing">Playing</option>
+                        <option value="daily-driver">Daily Driver</option>
+                        <option value="on-deck">On Deck</option>
+                        <option value="completed">Completed</option>
+                        <option value="backlog">Backlog</option>
+                        <option value="wishlist">Wishlist</option>
+                        <option value="abandoned">Abandoned</option>
+                    </select>
+                    <button onclick="showBulkAddToList()" class="secondary">📋 Add to List</button>
+                    <button onclick="selectAll()" class="secondary">Select All</button>
+                    <button onclick="clearSelection()" class="secondary">Clear</button>
+                    <button onclick="toggleBulkSelection()" style="background: #ff6b6b; color: #fff;">✕ Exit Bulk Mode</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Daily Driver Section -->
         <div class="section-header">
@@ -1535,10 +1585,31 @@
 
         <div class="import-export">
             <h3>Data Management</h3>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="exportData()">Export Library</button>
-                <button onclick="document.getElementById('import-file').click()" class="secondary">Import Library</button>
+            
+            <!-- Last Export Info -->
+            <div id="export-reminder" style="background: #2c3440; padding: 12px 15px; border-radius: 6px; margin: 10px 0; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <div style="color: #ffd93d; font-weight: 600; margin-bottom: 4px;">⚠️ Backup Reminder</div>
+                        <div style="color: #9ab; font-size: 0.9em;" id="export-reminder-text"></div>
+                    </div>
+                    <button onclick="exportData(); dismissExportReminder();" style="background: #00c030; padding: 8px 16px;">Export Now</button>
+                </div>
+            </div>
+            
+            <div style="color: #678; font-size: 0.85em; margin: 10px 0;" id="last-export-info">
+                Last export: Never
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                <button onclick="exportData()">📥 Export Library</button>
+                <button onclick="document.getElementById('import-file').click()" class="secondary">📤 Import Library</button>
+                <button onclick="showSteamImport()" class="secondary" id="steam-import-btn-footer" style="display: none;">🎮 Import from Steam</button>
                 <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+            
+            <div style="color: #556; font-size: 0.8em; margin-top: 12px; line-height: 1.6;">
+                💡 Regular exports create backups of your library and lists. We recommend exporting weekly.
             </div>
         </div>
 
@@ -1552,7 +1623,90 @@
             </p>
         </footer>
     </div>
+        </div> <!-- End games-page-view -->
+        
     </div> <!-- End main-app -->
+
+    <!-- Lists Manager Modal -->
+    <div id="lists-manager-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <button class="close-modal" onclick="closeListsManager()">×</button>
+            <h2 style="color: #fff; margin-bottom: 20px;">📋 My Lists</h2>
+            
+            <button onclick="showCreateListModal()" style="margin-bottom: 20px;">+ Create New List</button>
+            
+            <div id="lists-container" style="display: grid; gap: 15px;">
+                <!-- Lists will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit List Modal -->
+    <div id="create-list-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeCreateListModal()">×</button>
+            <h2 id="list-modal-title" style="color: #fff; margin-bottom: 20px;">Create New List</h2>
+            
+            <form id="list-form" onsubmit="saveList(event)">
+                <div class="form-group">
+                    <label>List Name *</label>
+                    <input type="text" id="list-name" required placeholder="e.g., Top 10 RPGs, Cozy Games">
+                </div>
+                
+                <div class="form-group">
+                    <label>List Type *</label>
+                    <select id="list-type" required onchange="toggleListTypeHelp()">
+                        <option value="simple">Simple List</option>
+                        <option value="ranked">Ranked List (ordered)</option>
+                    </select>
+                    <small id="list-type-help" style="color: #678; display: block; margin-top: 5px;">
+                        Simple lists are unordered collections. Ranked lists have a specific order (like Top 10).
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description (optional)</label>
+                    <textarea id="list-description" rows="3" placeholder="What's this list about?"></textarea>
+                </div>
+                
+                <button type="submit">Save List</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- View List Modal -->
+    <div id="view-list-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <button class="close-modal" onclick="closeViewListModal()">×</button>
+            <div id="list-detail-header" style="margin-bottom: 20px;">
+                <!-- List header will be rendered here -->
+            </div>
+            <div id="list-games-container">
+                <!-- List games will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Add to List Modal -->
+    <div id="bulk-add-list-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeBulkAddListModal()">×</button>
+            <h2 style="color: #fff; margin-bottom: 20px;">Add Selected Games to List</h2>
+            
+            <div class="form-group">
+                <label>Select a list *</label>
+                <select id="bulk-list-select" required>
+                    <option value="">Choose a list...</option>
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="addSelectedGamesToList()">Add to List</button>
+                <button onclick="showCreateListModalFromBulk()" class="secondary">+ Create New List</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Add/Edit Game Modal -->
     <div id="game-modal" class="modal">
@@ -1918,9 +2072,14 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let games = [];
+        let lists = []; // Custom game lists
+        let selectedGameIds = new Set(); // For bulk selection
+        let bulkSelectionMode = false; // Toggle bulk selection UI
+        let creatingListFromBulk = false; // Track if creating list to add selected games
         let currentGameId = null;
         let currentEditGameId = null;
         let currentEditSessionId = null;
+        let currentEditListId = null;
         let currentImageData = null;
         let currentUser = null;
         let isSyncing = false;
@@ -2116,10 +2275,15 @@
             
             // Show/hide Steam import button based on API key
             if (STEAM_API_KEY) {
-                document.getElementById('steam-import-btn').style.display = 'inline-block';
+                document.getElementById('steam-import-btn-footer').style.display = 'inline-block';
             } else {
-                document.getElementById('steam-import-btn').style.display = 'none';
+                document.getElementById('steam-import-btn-footer').style.display = 'none';
             }
+            
+            // Load and check export tracking
+            lastExportDate = localStorage.getItem('lastExportDate');
+            updateExportInfo();
+            checkExportReminder();
             
             // Request notification permission and check releases
             requestNotificationPermission();
@@ -2193,8 +2357,10 @@
                 const data = JSON.parse(stored);
                 games = Array.isArray(data) ? data.map(migrateGameData) : 
                         data.games ? data.games.map(migrateGameData) : [];
+                lists = data.lists || [];
             } else {
                 games = [];
+                lists = [];
             }
         }
 
@@ -2355,10 +2521,12 @@
                 // Also load from localStorage
                 const stored = localStorage.getItem('gameLibrary');
                 let localGames = [];
+                let localLists = [];
                 if (stored) {
                     const localData = JSON.parse(stored);
                     localGames = Array.isArray(localData) ? localData.map(migrateGameData) : 
                             localData.games ? localData.games.map(migrateGameData) : [];
+                    localLists = localData.lists || [];
                 }
                 
                 if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -2367,18 +2535,21 @@
                     
                     // Fall back to localStorage
                     games = localGames;
+                    lists = localLists;
                 } else if (data) {
                     // Supabase has data - merge with localStorage
                     const parsed = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
                     const cloudGames = Array.isArray(parsed) ? parsed.map(migrateGameData) : 
                             parsed.games ? parsed.games.map(migrateGameData) : [];
+                    const cloudLists = parsed.lists || [];
                     
                     // Merge: combine cloud + local, removing duplicates by title
                     games = mergeGames(cloudGames, localGames);
+                    lists = cloudLists.length > 0 ? cloudLists : localLists;
                     
                     // If we merged new games from localStorage, save back to cloud
-                    if (games.length > cloudGames.length) {
-                        console.log(`Merged ${games.length - cloudGames.length} games from localStorage into cloud`);
+                    if (games.length > cloudGames.length || (localLists.length > 0 && cloudLists.length === 0)) {
+                        console.log(`Merged ${games.length - cloudGames.length} games and ${localLists.length} lists from localStorage into cloud`);
                         await saveData(); // Sync merged data to cloud
                     }
                     
@@ -2387,6 +2558,7 @@
                     // No data in Supabase yet - use localStorage and sync to cloud
                     console.log('First login - migrating localStorage to cloud');
                     games = localGames;
+                    lists = localLists;
                     if (games.length > 0) {
                         await saveData(); // Sync to cloud
                     } else {
@@ -2396,6 +2568,15 @@
             } catch (err) {
                 console.error('Load error:', err);
                 setSyncStatus('error');
+                
+                // Fall back to localStorage on error
+                const stored = localStorage.getItem('gameLibrary');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    games = Array.isArray(data) ? data.map(migrateGameData) : 
+                            data.games ? data.games.map(migrateGameData) : [];
+                    lists = data.lists || [];
+                }
             }
         }
 
@@ -2455,7 +2636,8 @@
         async function saveData() {
             const data = {
                 version: APP_VERSION,
-                games: games
+                games: games,
+                lists: lists
             };
             
             // Always save to localStorage (works offline and as backup)
@@ -2592,8 +2774,15 @@
         function createGameCard(game) {
             const playtime = getTotalPlaytime(game);
             const fallbackIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="60" height="84" style="opacity: 0.3;"><rect x="10" y="10" width="80" height="120" fill="#00c030" rx="4"/><rect x="10" y="10" width="80" height="15" fill="#00e040" rx="4"/></svg>`;
+            const isSelected = selectedGameIds.has(game.id);
+            
             return `
-                <div class="game-card" onclick="showGameDetail('${game.id}')">
+                <div class="game-card" onclick="${bulkSelectionMode ? `toggleGameSelection('${game.id}', event)` : `showGameDetail('${game.id}')`}" style="${bulkSelectionMode ? 'cursor: pointer;' : ''}">
+                    ${bulkSelectionMode ? `
+                        <div style="position: absolute; top: 8px; right: 8px; z-index: 10; width: 28px; height: 28px; background: ${isSelected ? '#00c030' : 'rgba(0,0,0,0.7)'}; border: 2px solid ${isSelected ? '#00e040' : '#fff'}; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                            ${isSelected ? '✓' : ''}
+                        </div>
+                    ` : ''}
                     <div class="game-cover">
                         ${game.cover ? `<img src="${game.cover}" alt="${game.title}">` : fallbackIcon}
                     </div>
@@ -4285,11 +4474,468 @@
             showGameDetail(currentGameId);
         }
 
+        // ========== BULK SELECTION FUNCTIONS ==========
+        
+        function toggleBulkSelection() {
+            bulkSelectionMode = !bulkSelectionMode;
+            selectedGameIds.clear();
+            
+            const toolbar = document.getElementById('bulk-toolbar');
+            const btn = document.getElementById('bulk-select-btn');
+            
+            if (bulkSelectionMode) {
+                toolbar.style.display = 'block';
+                btn.style.background = '#00c030';
+                btn.style.color = '#fff';
+                btn.textContent = '✓ Bulk Mode Active';
+            } else {
+                toolbar.style.display = 'none';
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.textContent = '☑️ Bulk Select';
+            }
+            
+            renderGames();
+            updateSelectedCount();
+        }
+        
+        function toggleGameSelection(gameId, event) {
+            event.stopPropagation(); // Prevent opening game detail
+            
+            if (selectedGameIds.has(gameId)) {
+                selectedGameIds.delete(gameId);
+            } else {
+                selectedGameIds.add(gameId);
+            }
+            
+            updateSelectedCount();
+            renderGames();
+        }
+        
+        function selectAll() {
+            // Get all currently filtered/visible games
+            const visibleGames = getFilteredGames();
+            visibleGames.forEach(game => selectedGameIds.add(game.id));
+            updateSelectedCount();
+            renderGames();
+        }
+        
+        function clearSelection() {
+            selectedGameIds.clear();
+            updateSelectedCount();
+            renderGames();
+        }
+        
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = selectedGameIds.size;
+        }
+        
+        // Bulk status change
+        document.getElementById('bulk-status-select').addEventListener('change', async function() {
+            const newStatus = this.value;
+            if (!newStatus || selectedGameIds.size === 0) return;
+            
+            if (!confirm(`Change status of ${selectedGameIds.size} games to "${newStatus}"?`)) {
+                this.value = '';
+                return;
+            }
+            
+            selectedGameIds.forEach(gameId => {
+                const game = games.find(g => g.id === gameId);
+                if (game) {
+                    game.status = newStatus;
+                }
+            });
+            
+            await saveData();
+            renderGames();
+            updateStats();
+            this.value = '';
+            alert(`Updated ${selectedGameIds.size} games!`);
+        });
+        
+        // ========== LIST MANAGEMENT FUNCTIONS ==========
+        
+        // ========== PAGE NAVIGATION ==========
+        
+        function showListsPage() {
+            document.getElementById('games-page-view').style.display = 'none';
+            document.getElementById('lists-page-view').style.display = 'block';
+            document.getElementById('all-lists-view').style.display = 'block';
+            document.getElementById('single-list-view').style.display = 'none';
+            document.getElementById('main-title').textContent = 'My Lists';
+            renderAllLists();
+        }
+        
+        function showGamesPage() {
+            document.getElementById('lists-page-view').style.display = 'none';
+            document.getElementById('games-page-view').style.display = 'block';
+            document.getElementById('main-title').textContent = 'Game Library';
+        }
+        
+        function showListsManager() {
+            renderListsManager();
+            document.getElementById('lists-manager-modal').classList.add('active');
+        }
+        
+        function closeListsManager() {
+            document.getElementById('lists-manager-modal').classList.remove('active');
+        }
+        
+        function renderAllLists() {
+            const container = document.getElementById('lists-grid');
+            
+            if (lists.length === 0) {
+                container.innerHTML = `
+                    <p style="color: #678; text-align: center; padding: 40px;">
+                        No lists yet. Create your first list to organize your games!
+                    </p>
+                `;
+                return;
+            }
+            
+            container.innerHTML = lists.map(list => {
+                const gameCount = list.games ? list.games.length : 0;
+                const listType = list.type === 'ranked' ? '🏆 Ranked' : '📋 Simple';
+                
+                return `
+                    <div style="background: #1a1f29; padding: 20px; border-radius: 8px; border: 2px solid #2c3440;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div>
+                                <h3 style="color: #fff; margin: 0 0 5px 0;">${list.name}</h3>
+                                <div style="color: #9ab; font-size: 0.85em;">${listType} • ${gameCount} games</div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="viewList('${list.id}')" class="secondary" style="padding: 6px 12px; font-size: 0.85em;">View</button>
+                                <button onclick="editList('${list.id}')" class="secondary" style="padding: 6px 12px; font-size: 0.85em;">Edit</button>
+                                <button onclick="deleteList('${list.id}')" style="background: #ff6b6b; padding: 6px 12px; font-size: 0.85em;">Delete</button>
+                            </div>
+                        </div>
+                        ${list.description ? `<p style="color: #678; font-size: 0.9em; margin: 10px 0 0 0;">${list.description}</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function showCreateListModal() {
+            currentEditListId = null;
+            document.getElementById('list-modal-title').textContent = 'Create New List';
+            document.getElementById('list-form').reset();
+            document.getElementById('create-list-modal').classList.add('active');
+        }
+        
+        function showCreateListModalFromBulk() {
+            creatingListFromBulk = true;
+            closeBulkAddListModal();
+            showCreateListModal();
+        }
+        
+        function closeCreateListModal() {
+            document.getElementById('create-list-modal').classList.remove('active');
+        }
+        
+        function toggleListTypeHelp() {
+            const type = document.getElementById('list-type').value;
+            const help = document.getElementById('list-type-help');
+            
+            if (type === 'ranked') {
+                help.textContent = 'Ranked lists maintain a specific order. You can reorder games by dragging (e.g., Top 10 Favorites).';
+            } else {
+                help.textContent = 'Simple lists are unordered collections of games (e.g., Cozy Games, To Stream).';
+            }
+        }
+        
+        async function saveList(event) {
+            event.preventDefault();
+            
+            const listData = {
+                name: document.getElementById('list-name').value,
+                type: document.getElementById('list-type').value,
+                description: document.getElementById('list-description').value,
+                games: []
+            };
+            
+            if (currentEditListId) {
+                // Edit existing list
+                const index = lists.findIndex(l => l.id === currentEditListId);
+                const oldList = lists[index];
+                lists[index] = { ...oldList, ...listData };
+            } else {
+                // Create new list
+                const newList = {
+                    ...listData,
+                    id: Date.now().toString(),
+                    createdDate: new Date().toISOString().split('T')[0]
+                };
+                
+                // If creating from bulk mode, add selected games
+                if (creatingListFromBulk && selectedGameIds.size > 0) {
+                    newList.games = Array.from(selectedGameIds);
+                    clearSelection();
+                }
+                
+                lists.push(newList);
+            }
+            
+            await saveData();
+            closeCreateListModal();
+            renderAllLists();
+            populateBulkListSelect();
+            creatingListFromBulk = false; // Reset flag
+        }
+        
+        function editList(listId) {
+            const list = lists.find(l => l.id === listId);
+            if (!list) return;
+            
+            currentEditListId = listId;
+            document.getElementById('list-modal-title').textContent = 'Edit List';
+            document.getElementById('list-name').value = list.name;
+            document.getElementById('list-type').value = list.type;
+            document.getElementById('list-description').value = list.description || '';
+            toggleListTypeHelp();
+            
+            document.getElementById('create-list-modal').classList.add('active');
+        }
+        
+        async function deleteList(listId) {
+            const list = lists.find(l => l.id === listId);
+            if (!list) return;
+            
+            if (!confirm(`Delete list "${list.name}"? Games won't be deleted, just removed from this list.`)) return;
+            
+            lists = lists.filter(l => l.id !== listId);
+            await saveData();
+            renderAllLists();
+            populateBulkListSelect();
+        }
+        
+        function viewList(listId) {
+            const list = lists.find(l => l.id === listId);
+            if (!list) return;
+            
+            currentViewingListId = listId; // Track which list we're viewing
+            
+            // Switch to single list view
+            document.getElementById('all-lists-view').style.display = 'none';
+            document.getElementById('single-list-view').style.display = 'block';
+            
+            const listGames = list.games.map(gameId => games.find(g => g.id === gameId)).filter(g => g);
+            const listType = list.type === 'ranked' ? '🏆 Ranked List' : '📋 Simple List';
+            
+            document.getElementById('list-view-header').innerHTML = `
+                <div style="margin-bottom: 30px;">
+                    <button onclick="backToAllLists()" class="secondary" style="margin-bottom: 15px;">← Back to All Lists</button>
+                    <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="color: #fff; margin: 0 0 8px 0;">${list.name}</h2>
+                            <div style="color: #9ab; font-size: 0.95em; margin-bottom: 8px;">${listType} • ${listGames.length} games</div>
+                            ${list.description ? `<p style="color: #678; margin: 0; max-width: 600px;">${list.description}</p>` : ''}
+                            ${dragModeEnabled && list.type === 'ranked' ? `<p style="color: #00c030; font-size: 0.85em; margin: 8px 0 0 0; font-weight: 600;">✏️ Drag mode active - Drag games to reorder</p>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${list.type === 'ranked' && listGames.length > 0 ? `
+                                <button onclick="toggleDragMode('${list.id}')" class="secondary" style="${dragModeEnabled ? 'background: #00c030; color: #fff;' : ''}">
+                                    ${dragModeEnabled ? '✓ Exit Edit Mode' : '✏️ Edit Order'}
+                                </button>
+                            ` : ''}
+                            <button onclick="editList('${list.id}')" class="secondary">Edit List</button>
+                            <button onclick="removeAllFromList('${list.id}')" style="background: #ff6b6b;">Clear All</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (listGames.length === 0) {
+                document.getElementById('list-view-games').innerHTML = `
+                    <div style="background: #1a1f29; border: 2px dashed #2c3440; border-radius: 12px; padding: 60px 20px; text-align: center;">
+                        <p style="color: #678; font-size: 1.1em; margin: 0 0 15px 0;">This list is empty</p>
+                        <p style="color: #556; margin: 0;">Add games using bulk select or from the game detail view</p>
+                    </div>
+                `;
+            } else {
+                let gamesHtml = '';
+                
+                if (list.type === 'ranked') {
+                    // Ranked list with conditional drag-and-drop
+                    gamesHtml = '<div id="ranked-games-list">' + listGames.map((game, index) => `
+                        <div class="ranked-game-item" ${dragModeEnabled ? `draggable="true"` : ''} data-game-id="${game.id}" data-index="${index}" 
+                             ${dragModeEnabled ? `ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event, '${list.id}')" ondragend="handleDragEnd(event)"` : ''}
+                             style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #1a1f29; border-radius: 8px; margin-bottom: 12px; ${dragModeEnabled ? 'cursor: move;' : 'cursor: default;'} transition: all 0.2s; border: 2px solid transparent;"
+                             ${dragModeEnabled ? `onmouseover="this.style.borderColor='#00c030'" onmouseout="this.style.borderColor='transparent'"` : ''}>
+                            <div style="font-size: 1.8em; font-weight: bold; color: #00c030; min-width: 50px; text-align: center;">
+                                #${index + 1}
+                            </div>
+                            <div onclick="event.stopPropagation(); showGameDetail('${game.id}')" style="width: 80px; height: 120px; flex-shrink: 0; background: #2c3440; border-radius: 6px; overflow: hidden; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                ${game.cover ? `<img src="${game.cover}" style="width: 100%; height: 100%; object-fit: cover;">` : `
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #678;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" width="50" height="70" style="opacity: 0.3;">
+                                            <rect x="10" y="10" width="80" height="120" fill="#00c030" rx="4"/>
+                                            <rect x="10" y="10" width="80" height="15" fill="#00e040" rx="4"/>
+                                        </svg>
+                                    </div>
+                                `}
+                            </div>
+                            <div style="flex: 1; min-width: 0;" onclick="event.stopPropagation(); showGameDetail('${game.id}')" onmouseover="this.style.cursor='pointer'">
+                                <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 1.2em;">${game.title}</h3>
+                                <div style="color: #9ab; font-size: 0.9em; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <span class="status-badge status-${game.status}">${game.status}</span>
+                                    ${game.platform ? `<span>• ${game.platform}</span>` : ''}
+                                    ${game.rating > 0 ? `<span>• ${'★'.repeat(game.rating)}</span>` : ''}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                ${dragModeEnabled ? `<span style="color: #678; font-size: 1.2em; cursor: move;">⋮⋮</span>` : ''}
+                                <button onclick="event.stopPropagation(); removeFromList('${list.id}', '${game.id}')" class="secondary" style="padding: 8px 16px;">Remove</button>
+                            </div>
+                        </div>
+                    `).join('') + '</div>';
+                } else {
+                    // Simple list as game grid
+                    gamesHtml = '<div class="game-grid">' + listGames.map(game => createGameCard(game)).join('') + '</div>';
+                }
+                
+                document.getElementById('list-view-games').innerHTML = gamesHtml;
+            }
+        }
+        
+        function backToAllLists() {
+            dragModeEnabled = false; // Reset drag mode
+            currentViewingListId = null;
+            document.getElementById('single-list-view').style.display = 'none';
+            document.getElementById('all-lists-view').style.display = 'block';
+        }
+        
+        // Drag and drop handlers for ranked lists
+        let draggedElement = null;
+        let draggedIndex = null;
+        let dragModeEnabled = false;
+        let currentViewingListId = null; // Track which list we're viewing
+        let lastExportDate = null; // Track last export for reminders
+        
+        function toggleDragMode(listId) {
+            dragModeEnabled = !dragModeEnabled;
+            viewList(listId); // Refresh view
+        }
+        
+        function handleDragStart(event) {
+            draggedElement = event.currentTarget;
+            draggedIndex = parseInt(draggedElement.dataset.index);
+            event.currentTarget.style.opacity = '0.4';
+            event.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleDragOver(event) {
+            if (event.preventDefault) {
+                event.preventDefault();
+            }
+            event.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        async function handleDrop(event, listId) {
+            if (event.stopPropagation) {
+                event.stopPropagation();
+            }
+            
+            const dropTarget = event.currentTarget;
+            const dropIndex = parseInt(dropTarget.dataset.index);
+            
+            if (draggedElement !== dropTarget && draggedIndex !== null) {
+                const list = lists.find(l => l.id === listId);
+                if (!list) return;
+                
+                // Reorder the games array
+                const gameId = list.games[draggedIndex];
+                list.games.splice(draggedIndex, 1);
+                list.games.splice(dropIndex, 0, gameId);
+                
+                await saveData();
+                viewList(listId); // Refresh view
+            }
+            
+            return false;
+        }
+        
+        function handleDragEnd(event) {
+            event.currentTarget.style.opacity = '1';
+            draggedElement = null;
+            draggedIndex = null;
+        }
+        
+        function closeViewListModal() {
+            document.getElementById('view-list-modal').classList.remove('active');
+        }
+        
+        async function removeFromList(listId, gameId) {
+            const list = lists.find(l => l.id === listId);
+            if (!list) return;
+            
+            list.games = list.games.filter(id => id !== gameId);
+            await saveData();
+            viewList(listId); // Refresh view
+        }
+        
+        async function removeAllFromList(listId) {
+            const list = lists.find(l => l.id === listId);
+            if (!list) return;
+            
+            if (!confirm(`Remove all games from "${list.name}"?`)) return;
+            
+            list.games = [];
+            await saveData();
+            viewList(listId);
+        }
+        
+        function showBulkAddToList() {
+            if (selectedGameIds.size === 0) {
+                alert('Please select at least one game first.');
+                return;
+            }
+            
+            populateBulkListSelect();
+            document.getElementById('bulk-add-list-modal').classList.add('active');
+        }
+        
+        function closeBulkAddListModal() {
+            document.getElementById('bulk-add-list-modal').classList.remove('active');
+        }
+        
+        function populateBulkListSelect() {
+            const select = document.getElementById('bulk-list-select');
+            select.innerHTML = '<option value="">Choose a list...</option>' + 
+                lists.map(list => `<option value="${list.id}">${list.name} (${list.type})</option>`).join('');
+        }
+        
+        async function addSelectedGamesToList() {
+            const listId = document.getElementById('bulk-list-select').value;
+            if (!listId) {
+                alert('Please select a list');
+                return;
+            }
+            
+            const list = lists.find(l => l.id === listId);
+            if (!list) return;
+            
+            // Add selected games to list (avoid duplicates)
+            selectedGameIds.forEach(gameId => {
+                if (!list.games.includes(gameId)) {
+                    list.games.push(gameId);
+                }
+            });
+            
+            await saveData();
+            closeBulkAddListModal();
+            alert(`Added ${selectedGameIds.size} games to "${list.name}"!`);
+            clearSelection();
+        }
+
         function exportData() {
             const exportData = {
                 version: APP_VERSION,
                 exportDate: new Date().toISOString(),
-                games: games
+                games: games,
+                lists: lists
             };
             const dataStr = JSON.stringify(exportData, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -4299,6 +4945,68 @@
             link.download = `game-library-v${APP_VERSION}-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             URL.revokeObjectURL(url);
+            
+            // Track export date
+            lastExportDate = new Date().toISOString();
+            localStorage.setItem('lastExportDate', lastExportDate);
+            updateExportInfo();
+            document.getElementById('export-reminder').style.display = 'none';
+        }
+        
+        function updateExportInfo() {
+            const infoElement = document.getElementById('last-export-info');
+            
+            if (!lastExportDate) {
+                infoElement.innerHTML = '<span style="color: #ffd93d;">⚠️ Last export: Never - Consider backing up your library</span>';
+                return;
+            }
+            
+            const exportDate = new Date(lastExportDate);
+            const now = new Date();
+            const daysSince = Math.floor((now - exportDate) / (1000 * 60 * 60 * 24));
+            
+            let message = `Last export: ${exportDate.toLocaleDateString()} (${daysSince} day${daysSince !== 1 ? 's' : ''} ago)`;
+            let color = '#9ab';
+            
+            if (daysSince >= 7) {
+                color = '#ffd93d';
+                message = `⚠️ ${message}`;
+            }
+            
+            infoElement.innerHTML = `<span style="color: ${color};">${message}</span>`;
+        }
+        
+        function checkExportReminder() {
+            if (!lastExportDate) {
+                // Never exported - don't show reminder immediately, wait a day
+                return;
+            }
+            
+            const exportDate = new Date(lastExportDate);
+            const now = new Date();
+            const daysSince = Math.floor((now - exportDate) / (1000 * 60 * 60 * 24));
+            
+            if (daysSince >= 7) {
+                // Check if reminder was dismissed today
+                const dismissedDate = localStorage.getItem('exportReminderDismissed');
+                if (dismissedDate) {
+                    const dismissed = new Date(dismissedDate);
+                    const hoursSinceDismiss = Math.floor((now - dismissed) / (1000 * 60 * 60));
+                    if (hoursSinceDismiss < 24) {
+                        return; // Don't show if dismissed within last 24 hours
+                    }
+                }
+                
+                // Show reminder
+                const reminderElement = document.getElementById('export-reminder');
+                const reminderText = document.getElementById('export-reminder-text');
+                reminderText.textContent = `It's been ${daysSince} days since your last backup. Export your library to keep your data safe.`;
+                reminderElement.style.display = 'block';
+            }
+        }
+        
+        function dismissExportReminder() {
+            localStorage.setItem('exportReminderDismissed', new Date().toISOString());
         }
 
         async function importData(event) {
@@ -4311,6 +5019,7 @@
                     const imported = JSON.parse(e.target.result);
                     
                     let importedGames = [];
+                    let importedLists = [];
                     let importVersion = 'unknown';
                     
                     if (Array.isArray(imported)) {
@@ -4318,16 +5027,19 @@
                         importVersion = 'pre-1.0';
                     } else if (imported.games && Array.isArray(imported.games)) {
                         importedGames = imported.games;
+                        importedLists = imported.lists || [];
                         importVersion = imported.version || 'unknown';
                     } else {
                         throw new Error('Invalid file format');
                     }
                     
-                    if (confirm(`Import ${importedGames.length} games from version ${importVersion}?\n\nThis will replace your current library.`)) {
+                    if (confirm(`Import ${importedGames.length} games and ${importedLists.length} lists from version ${importVersion}?\n\nThis will replace your current library.`)) {
                         games = importedGames.map(migrateGameData);
+                        lists = importedLists;
                         await saveData();
                         renderGames();
                         updateStats();
+                        populateBulkListSelect();
                         alert('Import successful! Data migrated to v' + APP_VERSION);
                     }
                 } catch (error) {
