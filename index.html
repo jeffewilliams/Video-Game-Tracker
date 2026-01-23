@@ -3017,6 +3017,29 @@
         function updateStatsFilter() {
             updateStats();
         }
+        
+        // Smart refresh - maintains current view state
+        function refreshCurrentView() {
+            // Check if we're on lists page
+            const listsPageVisible = document.getElementById('lists-page-view').style.display !== 'none';
+            
+            if (listsPageVisible) {
+                // On lists page
+                const singleListVisible = document.getElementById('single-list-view').style.display !== 'none';
+                
+                if (singleListVisible && currentViewingListId) {
+                    // Viewing a specific list - refresh it
+                    viewList(currentViewingListId);
+                } else {
+                    // Viewing all lists - refresh the grid
+                    renderAllLists();
+                }
+            } else {
+                // On main game library page - refresh game grid
+                renderGames();
+                updateStats();
+            }
+        }
 
         function populateCompletedYearFilter() {
             const completedGames = games.filter(g => g.status === 'completed' && g.dateFinished);
@@ -3154,8 +3177,7 @@
                 populateCompletedYearFilter(); // Update year dropdown
                 checkUpcomingReleases(); // Update notification badge
                 updateTagFilter(); // Update tag filter dropdown
-                renderGames();
-                updateStats();
+                refreshCurrentView(); // Smart refresh based on current view
                 closeGameModal();
             } catch (error) {
                 console.error('Error in saveGame:', error);
@@ -3366,8 +3388,7 @@
             
             games = games.filter(g => g.id !== gameId);
             await saveData();
-            renderGames();
-            updateStats();
+            refreshCurrentView();
             closeDetailModal();
         }
 
@@ -3398,9 +3419,9 @@
 
             game.dlcs.push(dlc);
             await saveData();
-            updateStats();
             closeDlcModal();
-            showGameDetail(currentGameId);
+            showGameDetail(currentGameId); // This refreshes the detail modal
+            refreshCurrentView(); // Also refresh the main view
         }
 
         async function deleteDlc(dlcId) {
@@ -3411,7 +3432,8 @@
 
             game.dlcs = game.dlcs.filter(d => d.id !== dlcId);
             await saveData();
-            updateStats();
+            showGameDetail(currentGameId); // Refresh detail modal
+            refreshCurrentView(); // Refresh main view
             showGameDetail(currentGameId);
         }
 
@@ -4425,8 +4447,7 @@
             populateCompletedYearFilter();
             checkUpcomingReleases();
             updateTagFilter();
-            renderGames();
-            updateStats();
+            refreshCurrentView();
             closeSteamImport();
 
             alert(`Import complete!\n\n✅ Imported: ${importedCount} games\n${skippedCount > 0 ? `⏭️ Skipped: ${skippedCount} (already in library)` : ''}`);
@@ -4464,9 +4485,9 @@
             }
 
             await saveData();
-            updateStats();
             closeSessionModal();
-            showGameDetail(currentGameId);
+            showGameDetail(currentGameId); // Refresh detail modal
+            refreshCurrentView(); // Refresh main view
         }
 
         function editSession(sessionId) {
@@ -4494,8 +4515,8 @@
 
             game.sessions = game.sessions.filter(s => s.id !== sessionId);
             await saveData();
-            updateStats();
-            showGameDetail(currentGameId);
+            showGameDetail(currentGameId); // Refresh detail modal
+            refreshCurrentView(); // Refresh main view
         }
 
         // ========== BULK SELECTION FUNCTIONS ==========
@@ -4572,8 +4593,7 @@
             });
             
             await saveData();
-            renderGames();
-            updateStats();
+            refreshCurrentView();
             this.value = '';
             alert(`Updated ${selectedGameIds.size} games!`);
         });
@@ -5194,8 +5214,7 @@
                         games = importedGames.map(migrateGameData);
                         lists = importedLists;
                         await saveData();
-                        renderGames();
-                        updateStats();
+                        refreshCurrentView();
                         populateBulkListSelect();
                         alert('Import successful! Data migrated to v' + APP_VERSION);
                     }
