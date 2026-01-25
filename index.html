@@ -5141,6 +5141,102 @@
         // ========== 90s RETRO MODE EASTER EGG ==========
         
         let retro90sMode = false;
+        let retroAudioContext = null;
+        let retroMusicNodes = [];
+        let retroMusicPlaying = false;
+        
+        function play90sChiptune() {
+            if (retroMusicPlaying) return;
+            
+            try {
+                retroAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                retroMusicPlaying = true;
+                
+                // Classic 90s game melody notes (frequency in Hz)
+                const melody = [
+                    { note: 523.25, duration: 0.2 },  // C5
+                    { note: 659.25, duration: 0.2 },  // E5
+                    { note: 783.99, duration: 0.2 },  // G5
+                    { note: 1046.50, duration: 0.4 }, // C6
+                    { note: 783.99, duration: 0.2 },  // G5
+                    { note: 1046.50, duration: 0.4 }, // C6
+                    { note: 987.77, duration: 0.2 },  // B5
+                    { note: 880.00, duration: 0.2 },  // A5
+                    { note: 783.99, duration: 0.2 },  // G5
+                    { note: 659.25, duration: 0.4 },  // E5
+                    { note: 523.25, duration: 0.2 },  // C5
+                    { note: 659.25, duration: 0.6 }   // E5
+                ];
+                
+                function playMelody(startTime) {
+                    if (!retroMusicPlaying) return;
+                    
+                    let currentTime = startTime;
+                    
+                    melody.forEach((note, index) => {
+                        if (!retroMusicPlaying) return;
+                        
+                        const oscillator = retroAudioContext.createOscillator();
+                        const gainNode = retroAudioContext.createGain();
+                        
+                        oscillator.type = 'square'; // Classic chiptune square wave
+                        oscillator.frequency.value = note.note;
+                        
+                        gainNode.gain.setValueAtTime(0, currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.08, currentTime + 0.01);
+                        gainNode.gain.linearRampToValueAtTime(0, currentTime + note.duration);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(retroAudioContext.destination);
+                        
+                        oscillator.start(currentTime);
+                        oscillator.stop(currentTime + note.duration);
+                        
+                        retroMusicNodes.push(oscillator);
+                        
+                        currentTime += note.duration;
+                    });
+                    
+                    // Loop the melody
+                    const totalDuration = melody.reduce((sum, note) => sum + note.duration, 0);
+                    setTimeout(() => {
+                        if (retroMusicPlaying) {
+                            playMelody(retroAudioContext.currentTime);
+                        }
+                    }, totalDuration * 1000);
+                }
+                
+                playMelody(retroAudioContext.currentTime);
+                
+            } catch (e) {
+                console.log('Audio not supported:', e);
+                retroMusicPlaying = false;
+            }
+        }
+        
+        function stop90sChiptune() {
+            retroMusicPlaying = false;
+            
+            // Stop all oscillators
+            retroMusicNodes.forEach(node => {
+                try {
+                    node.stop();
+                } catch (e) {
+                    // Already stopped
+                }
+            });
+            retroMusicNodes = [];
+            
+            // Close audio context
+            if (retroAudioContext) {
+                try {
+                    retroAudioContext.close();
+                } catch (e) {
+                    // Silent fail
+                }
+                retroAudioContext = null;
+            }
+        }
         
         function toggle90sMode() {
             retro90sMode = !retro90sMode;
@@ -5150,7 +5246,7 @@
                 document.getElementById('retro-toggle').textContent = '🚀';
                 document.getElementById('retro-toggle').title = 'Back to the Future';
                 
-                // Play a fun sound if possible
+                // Play startup beep
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const oscillator = audioContext.createOscillator();
@@ -5168,11 +5264,17 @@
                     // Silent fail if audio not supported
                 }
                 
+                // Start chiptune music
+                play90sChiptune();
+                
                 alert("🎮 Welcome to 1997! 🎮\n\nYou've discovered the RADICAL retro mode!\n\nWebmaster's Note: This page is best viewed in Netscape Navigator 4.0 at 800x600 resolution. Don't forget to sign my guestbook!");
             } else {
                 document.body.classList.remove('retro-90s');
                 document.getElementById('retro-toggle').textContent = '🕹️';
                 document.getElementById('retro-toggle').title = '???';
+                
+                // Stop the music
+                stop90sChiptune();
             }
         }
         
