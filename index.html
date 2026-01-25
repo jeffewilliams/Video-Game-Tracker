@@ -1935,27 +1935,73 @@
 
     <!-- Add Session Modal -->
     <div id="session-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 700px;">
             <button class="close-modal" onclick="closeSessionModal()">×</button>
             <h2 style="color: #fff; margin-bottom: 20px;">Log Play Session</h2>
             <form id="session-form" onsubmit="saveSession(event)">
                 <div class="form-group">
-                    <label>Date *</label>
-                    <input type="date" id="session-date" required>
+                    <label>Session Title (optional)</label>
+                    <input type="text" id="session-title" placeholder="e.g., 'Epic boss battle', 'Exploring new area'">
                 </div>
-                <div class="form-group">
-                    <label>Duration (hours)</label>
-                    <input type="number" id="session-duration" step="0.5" min="0" placeholder="2.5">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Date *</label>
+                        <input type="date" id="session-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (hours)</label>
+                        <input type="number" id="session-duration" step="0.5" min="0" placeholder="2.5">
+                    </div>
                 </div>
+                
                 <div class="form-group">
                     <label>Progress/Achievements</label>
                     <input type="text" id="session-progress" placeholder="Reached level 50, defeated final boss, etc.">
                 </div>
+                
                 <div class="form-group">
-                    <label>Session Notes</label>
-                    <textarea id="session-notes" placeholder="What did you think about this session?"></textarea>
+                    <label>Session Notes / Journal Entry</label>
+                    <textarea id="session-notes" placeholder="How was this session? What happened? How did you feel? Any memorable moments?" rows="6"></textarea>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Mood/Feeling (optional)</label>
+                        <select id="session-mood">
+                            <option value="">Not specified</option>
+                            <option value="amazing">🤩 Amazing</option>
+                            <option value="fun">😊 Fun</option>
+                            <option value="good">👍 Good</option>
+                            <option value="okay">😐 Okay</option>
+                            <option value="frustrated">😤 Frustrated</option>
+                            <option value="bored">😴 Bored</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="session-spoilers" style="width: auto; cursor: pointer;">
+                            <span>Contains spoilers</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 10px;">
+                            <input type="checkbox" id="session-favorite" style="width: auto; cursor: pointer;">
+                            <span>⭐ Favorite moment</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Screenshots (optional)</label>
+                    <input type="file" id="session-photos" accept="image/*" multiple style="padding: 10px; background: #2c3440; border: 2px dashed #556; border-radius: 4px; cursor: pointer;">
+                    <div style="color: #678; font-size: 0.85em; margin-top: 5px;">
+                        Images will be compressed to save space. Max 5 photos per session.
+                    </div>
+                    <div id="session-photos-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;">
+                        <!-- Photo previews will appear here -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit">Save Session</button>
                     <button type="button" class="secondary" onclick="closeSessionModal()">Cancel</button>
                 </div>
@@ -2103,6 +2149,7 @@
         let currentGameId = null;
         let currentEditGameId = null;
         let currentEditSessionId = null;
+        let currentSessionPhotos = []; // Store compressed photos for current session
         let currentEditListId = null;
         let currentImageData = null;
         let currentUser = null;
@@ -3307,18 +3354,41 @@
                                 // Sort by date, most recent first
                                 return compareDateStrings(a.date, b.date);
                             }).map(session => {
+                                const moodEmoji = {
+                                    'amazing': '🤩',
+                                    'fun': '😊',
+                                    'good': '👍',
+                                    'okay': '😐',
+                                    'frustrated': '😤',
+                                    'bored': '😴'
+                                };
+                                
                                 return `
-                                <div class="session-card">
-                                    <div class="session-header">
-                                        <span class="session-date">${formatDateForDisplay(session.date)}</span>
+                                <div class="session-card" style="${session.favorite ? 'border-left: 3px solid #ffd93d;' : ''}">
+                                    <div class="session-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                        <div style="flex: 1;">
+                                            ${session.title ? `<div style="color: #fff; font-weight: 600; font-size: 1.05em; margin-bottom: 4px;">${session.title} ${session.favorite ? '⭐' : ''}</div>` : ''}
+                                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                                <span class="session-date">${formatDateForDisplay(session.date)}</span>
+                                                ${session.duration ? `<span class="session-duration">⏱️ ${session.duration}h</span>` : ''}
+                                                ${session.mood ? `<span style="font-size: 1.2em;">${moodEmoji[session.mood]}</span>` : ''}
+                                                ${session.spoilers ? `<span style="color: #ff6b6b; font-size: 0.85em; background: rgba(255,107,107,0.2); padding: 2px 8px; border-radius: 4px;">⚠️ Spoilers</span>` : ''}
+                                            </div>
+                                        </div>
                                         <div style="display: flex; gap: 5px; align-items: center;">
-                                            <span class="session-duration">${session.duration ? `${session.duration}h` : ''}</span>
                                             <button onclick="editSession('${session.id}')" class="session-edit-btn" title="Edit">✏️</button>
                                             <button onclick="deleteSession('${session.id}')" class="session-delete-btn" title="Delete">🗑️</button>
                                         </div>
                                     </div>
-                                    ${session.notes ? `<div class="session-notes">${session.notes}</div>` : ''}
-                                    ${session.progress ? `<div class="session-progress">📊 ${session.progress}</div>` : ''}
+                                    ${session.progress ? `<div class="session-progress" style="color: #9ab; margin-bottom: 8px;">📊 ${session.progress}</div>` : ''}
+                                    ${session.notes ? `<div class="session-notes" style="white-space: pre-wrap;">${session.notes}</div>` : ''}
+                                    ${session.photos && session.photos.length > 0 ? `
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 12px;">
+                                            ${session.photos.map(photo => `
+                                                <img src="${photo}" onclick="window.open(this.src)" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 `;
                             }).join('')}
@@ -3467,6 +3537,9 @@
 
         function closeSessionModal() {
             currentEditSessionId = null; // Clear edit mode on close
+            currentSessionPhotos = []; // Clear photos
+            document.getElementById('session-form').reset();
+            document.getElementById('session-photos-preview').innerHTML = '';
             document.getElementById('session-modal').classList.remove('active');
         }
 
@@ -4469,6 +4542,103 @@
             alert(`Import complete!\n\n✅ Imported: ${importedCount} games\n${skippedCount > 0 ? `⏭️ Skipped: ${skippedCount} (already in library)` : ''}`);
         }
 
+        // ========== SESSION PHOTO HANDLING ==========
+        
+        // Setup photo input handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const photoInput = document.getElementById('session-photos');
+            if (photoInput) {
+                photoInput.addEventListener('change', handleSessionPhotos);
+            }
+        });
+        
+        async function handleSessionPhotos(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            
+            if (files.length > 5) {
+                alert('Maximum 5 photos per session. Only the first 5 will be used.');
+                files.splice(5);
+            }
+            
+            currentSessionPhotos = [];
+            const preview = document.getElementById('session-photos-preview');
+            preview.innerHTML = '<div style="color: #9ab; padding: 10px;">Compressing images...</div>';
+            
+            for (const file of files) {
+                try {
+                    const compressed = await compressImage(file);
+                    currentSessionPhotos.push(compressed);
+                } catch (error) {
+                    console.error('Error compressing image:', error);
+                }
+            }
+            
+            renderSessionPhotosPreviews();
+        }
+        
+        async function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Calculate new dimensions (max 800px width)
+                        let width = img.width;
+                        let height = img.height;
+                        const maxWidth = 800;
+                        
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+                        
+                        // Create canvas and compress
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to JPEG at 80% quality
+                        canvas.toBlob((blob) => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                resolve(e.target.result); // Base64 string
+                            };
+                            reader.readAsDataURL(blob);
+                        }, 'image/jpeg', 0.8);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function renderSessionPhotosPreviews() {
+            const preview = document.getElementById('session-photos-preview');
+            
+            if (currentSessionPhotos.length === 0) {
+                preview.innerHTML = '';
+                return;
+            }
+            
+            preview.innerHTML = currentSessionPhotos.map((photo, index) => `
+                <div style="position: relative; aspect-ratio: 1; background: #2c3440; border-radius: 4px; overflow: hidden;">
+                    <img src="${photo}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <button type="button" onclick="removeSessionPhoto(${index})" 
+                            style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px; line-height: 1; padding: 0;">×</button>
+                </div>
+            `).join('');
+        }
+        
+        function removeSessionPhoto(index) {
+            currentSessionPhotos.splice(index, 1);
+            renderSessionPhotosPreviews();
+        }
+        
         async function saveSession(event) {
             event.preventDefault();
             
@@ -4478,10 +4648,15 @@
             if (!game.sessions) game.sessions = [];
 
             const sessionData = {
+                title: document.getElementById('session-title').value,
                 date: dateInputToString(document.getElementById('session-date').value),
                 duration: document.getElementById('session-duration').value,
                 progress: document.getElementById('session-progress').value,
-                notes: document.getElementById('session-notes').value
+                notes: document.getElementById('session-notes').value,
+                mood: document.getElementById('session-mood').value,
+                spoilers: document.getElementById('session-spoilers').checked,
+                favorite: document.getElementById('session-favorite').checked,
+                photos: currentSessionPhotos.slice() // Copy array
             };
 
             if (currentEditSessionId) {
@@ -4501,6 +4676,7 @@
             }
 
             await saveData();
+            currentSessionPhotos = []; // Clear photos array
             closeSessionModal();
             showGameDetail(currentGameId); // Refresh detail modal
             refreshCurrentView(); // Refresh main view
@@ -4515,10 +4691,18 @@
 
             currentEditSessionId = sessionId;
             
+            document.getElementById('session-title').value = session.title || '';
             document.getElementById('session-date').value = dateStringToInputValue(session.date);
             document.getElementById('session-duration').value = session.duration || '';
             document.getElementById('session-progress').value = session.progress || '';
             document.getElementById('session-notes').value = session.notes || '';
+            document.getElementById('session-mood').value = session.mood || '';
+            document.getElementById('session-spoilers').checked = session.spoilers || false;
+            document.getElementById('session-favorite').checked = session.favorite || false;
+            
+            // Load existing photos
+            currentSessionPhotos = session.photos ? session.photos.slice() : [];
+            renderSessionPhotosPreviews();
             
             document.getElementById('session-modal').classList.add('active');
         }
