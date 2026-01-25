@@ -2304,8 +2304,7 @@
                 document.getElementById('steam-import-btn-footer').style.display = 'none';
             }
             
-            // Load and check export tracking
-            lastExportDate = localStorage.getItem('lastExportDate');
+            // Update export info UI (lastExportDate already loaded from data)
             updateExportInfo();
             checkExportReminder();
             
@@ -2382,9 +2381,11 @@
                 games = Array.isArray(data) ? data.map(migrateGameData) : 
                         data.games ? data.games.map(migrateGameData) : [];
                 lists = data.lists || [];
+                lastExportDate = data.lastExportDate || null;
             } else {
                 games = [];
                 lists = [];
+                lastExportDate = null;
             }
         }
 
@@ -2546,11 +2547,13 @@
                 const stored = localStorage.getItem('gameLibrary');
                 let localGames = [];
                 let localLists = [];
+                let localLastExportDate = null;
                 if (stored) {
                     const localData = JSON.parse(stored);
                     localGames = Array.isArray(localData) ? localData.map(migrateGameData) : 
                             localData.games ? localData.games.map(migrateGameData) : [];
                     localLists = localData.lists || [];
+                    localLastExportDate = localData.lastExportDate || null;
                 }
                 
                 if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
@@ -2560,16 +2563,26 @@
                     // Fall back to localStorage
                     games = localGames;
                     lists = localLists;
+                    lastExportDate = localLastExportDate;
                 } else if (data) {
                     // Supabase has data - merge with localStorage
                     const parsed = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
                     const cloudGames = Array.isArray(parsed) ? parsed.map(migrateGameData) : 
                             parsed.games ? parsed.games.map(migrateGameData) : [];
                     const cloudLists = parsed.lists || [];
+                    const cloudLastExportDate = parsed.lastExportDate || null;
                     
                     // Merge: combine cloud + local, removing duplicates by title
                     games = mergeGames(cloudGames, localGames);
                     lists = cloudLists.length > 0 ? cloudLists : localLists;
+                    
+                    // Use the most recent export date
+                    if (cloudLastExportDate && localLastExportDate) {
+                        lastExportDate = new Date(cloudLastExportDate) > new Date(localLastExportDate) ? 
+                            cloudLastExportDate : localLastExportDate;
+                    } else {
+                        lastExportDate = cloudLastExportDate || localLastExportDate;
+                    }
                     
                     // If we merged new games from localStorage, save back to cloud
                     if (games.length > cloudGames.length || (localLists.length > 0 && cloudLists.length === 0)) {
@@ -2583,6 +2596,7 @@
                     console.log('First login - migrating localStorage to cloud');
                     games = localGames;
                     lists = localLists;
+                    lastExportDate = localLastExportDate;
                     if (games.length > 0) {
                         await saveData(); // Sync to cloud
                     } else {
@@ -2600,6 +2614,7 @@
                     games = Array.isArray(data) ? data.map(migrateGameData) : 
                             data.games ? data.games.map(migrateGameData) : [];
                     lists = data.lists || [];
+                    lastExportDate = data.lastExportDate || null;
                 }
             }
         }
@@ -2661,7 +2676,8 @@
             const data = {
                 version: APP_VERSION,
                 games: games,
-                lists: lists
+                lists: lists,
+                lastExportDate: lastExportDate // Include export tracking
             };
             
             // Always save to localStorage (works offline and as backup)
@@ -5101,10 +5117,12 @@
             
             await saveData();
             closeAddGamesToListModal();
-            viewList(addGamesListId); // Refresh list view
             
-            // Show success message
-            alert(`Added ${count} game${count !== 1 ? 's' : ''} to "${list.name}"!`);
+            // Small delay to ensure modal is closed before refreshing
+            setTimeout(() => {
+                viewList(addGamesListId); // Refresh list view
+                alert(`Added ${count} game${count !== 1 ? 's' : ''} to "${list.name}"!`);
+            }, 100);
         }
 
         function exportData() {
@@ -5123,9 +5141,10 @@
             link.click();
             URL.revokeObjectURL(url);
             
-            // Track export date
+            // Track export date and sync to cloud
             lastExportDate = new Date().toISOString();
             localStorage.setItem('lastExportDate', lastExportDate);
+            saveData(); // Sync the updated lastExportDate to cloud
             updateExportInfo();
             document.getElementById('export-reminder').style.display = 'none';
         }
