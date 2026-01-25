@@ -1495,9 +1495,16 @@
         <div id="lists-page-view" style="display: none;">
             <!-- All Lists View -->
             <div id="all-lists-view">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <button onclick="showGamesPage()" class="secondary">← Back to Games</button>
-                    <button onclick="showCreateListModal()">+ Create New List</button>
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                        <button onclick="showGamesPage()" class="secondary" style="padding: 8px 12px; font-size: 0.9em;">🏠 Home</button>
+                        <span style="color: #556;">/</span>
+                        <span style="color: #9ab; font-size: 0.9em;">My Lists</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="color: #fff; margin: 0;">My Lists</h2>
+                        <button onclick="showCreateListModal()">+ Create New List</button>
+                    </div>
                 </div>
                 
                 <div id="lists-grid" style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
@@ -2006,6 +2013,14 @@
                     <button type="button" class="secondary" onclick="closeSessionModal()">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Session Detail Modal -->
+    <div id="session-detail-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <button class="close-modal" onclick="closeSessionDetailModal()">×</button>
+            <div id="session-detail-content"></div>
         </div>
     </div>
 
@@ -3364,7 +3379,7 @@
                                 };
                                 
                                 return `
-                                <div class="session-card" style="${session.favorite ? 'border-left: 3px solid #ffd93d;' : ''}">
+                                <div class="session-card" onclick="viewSessionDetail('${session.id}')" style="${session.favorite ? 'border-left: 3px solid #ffd93d;' : ''} cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#1e2430'" onmouseout="this.style.background='#15191f'">
                                     <div class="session-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
                                         <div style="flex: 1;">
                                             ${session.title ? `<div style="color: #fff; font-weight: 600; font-size: 1.05em; margin-bottom: 4px;">${session.title} ${session.favorite ? '⭐' : ''}</div>` : ''}
@@ -3376,17 +3391,18 @@
                                             </div>
                                         </div>
                                         <div style="display: flex; gap: 5px; align-items: center;">
-                                            <button onclick="editSession('${session.id}')" class="session-edit-btn" title="Edit">✏️</button>
-                                            <button onclick="deleteSession('${session.id}')" class="session-delete-btn" title="Delete">🗑️</button>
+                                            <button onclick="event.stopPropagation(); editSession('${session.id}')" class="session-edit-btn" title="Edit">✏️</button>
+                                            <button onclick="event.stopPropagation(); deleteSession('${session.id}')" class="session-delete-btn" title="Delete">🗑️</button>
                                         </div>
                                     </div>
                                     ${session.progress ? `<div class="session-progress" style="color: #9ab; margin-bottom: 8px;">📊 ${session.progress}</div>` : ''}
-                                    ${session.notes ? `<div class="session-notes" style="white-space: pre-wrap;">${session.notes}</div>` : ''}
+                                    ${session.notes ? `<div class="session-notes" style="white-space: pre-wrap; ${session.notes.length > 150 ? 'display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;' : ''}">${session.notes}</div>` : ''}
                                     ${session.photos && session.photos.length > 0 ? `
                                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 12px;">
-                                            ${session.photos.map(photo => `
-                                                <img src="${photo}" onclick="window.open(this.src)" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                            ${session.photos.slice(0, 3).map(photo => `
+                                                <img src="${photo}" onclick="event.stopPropagation(); window.open(this.src)" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                             `).join('')}
+                                            ${session.photos.length > 3 ? `<div style="display: flex; align-items: center; justify-content: center; background: #2c3440; border-radius: 4px; color: #9ab; font-size: 0.9em;">+${session.photos.length - 3} more</div>` : ''}
                                         </div>
                                     ` : ''}
                                 </div>
@@ -4682,6 +4698,96 @@
             refreshCurrentView(); // Refresh main view
         }
 
+        // ========== SESSION DETAIL VIEW ==========
+        
+        function viewSessionDetail(sessionId) {
+            const game = games.find(g => g.id === currentGameId);
+            if (!game) return;
+            
+            const session = game.sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            const moodLabels = {
+                'amazing': '🤩 Amazing',
+                'fun': '😊 Fun',
+                'good': '👍 Good',
+                'okay': '😐 Okay',
+                'frustrated': '😤 Frustrated',
+                'bored': '😴 Bored'
+            };
+            
+            const content = `
+                <div style="padding: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                        <div>
+                            ${session.title ? `<h2 style="color: #fff; margin: 0 0 10px 0;">${session.title} ${session.favorite ? '⭐' : ''}</h2>` : '<h2 style="color: #fff; margin: 0 0 10px 0;">Play Session</h2>'}
+                            <div style="color: #9ab; font-size: 0.95em;">
+                                ${formatDateForDisplay(session.date)}
+                                ${session.duration ? ` • ${session.duration} hours` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="closeSessionDetailModal(); editSession('${session.id}')" class="secondary">✏️ Edit</button>
+                            <button onclick="closeSessionDetailModal(); deleteSession('${session.id}')" style="background: #ff6b6b;">🗑️ Delete</button>
+                        </div>
+                    </div>
+                    
+                    ${session.mood || session.spoilers || session.favorite ? `
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px; background: #1a1f29; border-radius: 8px;">
+                            ${session.mood ? `<span style="color: #9ab;">Mood: ${moodLabels[session.mood]}</span>` : ''}
+                            ${session.spoilers ? `<span style="color: #ff6b6b;">⚠️ Contains Spoilers</span>` : ''}
+                            ${session.favorite ? `<span style="color: #ffd93d;">⭐ Favorite Moment</span>` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    ${session.progress ? `
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="color: #fff; font-size: 1em; margin: 0 0 8px 0;">📊 Progress & Achievements</h3>
+                            <div style="color: #9ab; padding: 12px; background: #1a1f29; border-radius: 8px;">
+                                ${session.progress}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${session.notes ? `
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="color: #fff; font-size: 1em; margin: 0 0 8px 0;">📝 Session Notes</h3>
+                            <div style="color: #9ab; white-space: pre-wrap; line-height: 1.6; padding: 12px; background: #1a1f29; border-radius: 8px;">
+                                ${session.notes}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${session.photos && session.photos.length > 0 ? `
+                        <div>
+                            <h3 style="color: #fff; font-size: 1em; margin: 0 0 12px 0;">📸 Screenshots (${session.photos.length})</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+                                ${session.photos.map(photo => `
+                                    <img src="${photo}" onclick="window.open(this.src)" 
+                                         style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; border: 2px solid #2c3440;" 
+                                         onmouseover="this.style.transform='scale(1.05)'; this.style.borderColor='#00c030'" 
+                                         onmouseout="this.style.transform='scale(1)'; this.style.borderColor='#2c3440'">
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button onclick="closeSessionDetailModal()" class="secondary" style="width: 100%; max-width: 300px; padding: 12px;">
+                            ← Back to Game
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('session-detail-content').innerHTML = content;
+            document.getElementById('session-detail-modal').classList.add('active');
+        }
+        
+        function closeSessionDetailModal() {
+            document.getElementById('session-detail-modal').classList.remove('active');
+        }
+        
         function editSession(sessionId) {
             const game = games.find(g => g.id === currentGameId);
             if (!game) return;
@@ -4969,7 +5075,13 @@
             
             document.getElementById('list-view-header').innerHTML = `
                 <div style="margin-bottom: 30px;">
-                    <button onclick="backToAllLists()" class="secondary" style="margin-bottom: 15px;">← Back to All Lists</button>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button onclick="showGamesPage()" class="secondary" style="padding: 8px 12px; font-size: 0.9em;">🏠 Home</button>
+                        <span style="color: #556; display: flex; align-items: center;">/</span>
+                        <button onclick="backToAllLists()" class="secondary" style="padding: 8px 12px; font-size: 0.9em;">📋 All Lists</button>
+                        <span style="color: #556; display: flex; align-items: center;">/</span>
+                        <span style="color: #9ab; display: flex; align-items: center; font-size: 0.9em;">${list.name}</span>
+                    </div>
                     <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 15px;">
                         <div style="flex: 1; min-width: 200px;">
                             <h2 style="color: #fff; margin: 0 0 8px 0;">${list.name}</h2>
