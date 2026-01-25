@@ -1676,7 +1676,10 @@
                     <textarea id="list-description" rows="3" placeholder="What's this list about?"></textarea>
                 </div>
                 
-                <button type="submit">Save List</button>
+                <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                    <button type="submit">Save List</button>
+                    <button type="button" id="list-delete-btn" onclick="deleteListFromModal()" style="background: #ff6b6b; display: none;">🗑️ Delete List</button>
+                </div>
             </form>
         </div>
     </div>
@@ -1894,9 +1897,12 @@
                     <textarea id="game-notes" placeholder="Your thoughts about this game..."></textarea>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit">Save Game</button>
-                    <button type="button" class="secondary" onclick="closeGameModal()">Cancel</button>
+                <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit">Save Game</button>
+                        <button type="button" class="secondary" onclick="closeGameModal()">Cancel</button>
+                    </div>
+                    <button type="button" id="game-delete-btn" onclick="deleteGameFromModal()" style="background: #ff6b6b; display: none;">🗑️ Delete Game</button>
                 </div>
             </form>
         </div>
@@ -1914,7 +1920,7 @@
     <div id="dlc-modal" class="modal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeDlcModal()">×</button>
-            <h2 style="color: #fff; margin-bottom: 20px;">Add DLC</h2>
+            <h2 id="dlc-modal-title" style="color: #fff; margin-bottom: 20px;">Add DLC</h2>
             <form id="dlc-form" onsubmit="saveDlc(event)">
                 <div class="form-group">
                     <label>DLC Name *</label>
@@ -1932,9 +1938,12 @@
                     <label>Notes</label>
                     <textarea id="dlc-notes" placeholder="What's included in this DLC?"></textarea>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit">Save DLC</button>
-                    <button type="button" class="secondary" onclick="closeDlcModal()">Cancel</button>
+                <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit">Save DLC</button>
+                        <button type="button" class="secondary" onclick="closeDlcModal()">Cancel</button>
+                    </div>
+                    <button type="button" id="dlc-delete-btn" onclick="deleteDlcFromModal()" style="background: #ff6b6b; display: none;">🗑️ Delete DLC</button>
                 </div>
             </form>
         </div>
@@ -2008,9 +2017,12 @@
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit">Save Session</button>
-                    <button type="button" class="secondary" onclick="closeSessionModal()">Cancel</button>
+                <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit">Save Session</button>
+                        <button type="button" class="secondary" onclick="closeSessionModal()">Cancel</button>
+                    </div>
+                    <button type="button" id="session-delete-btn" onclick="deleteSessionFromModal()" style="background: #ff6b6b; display: none;">🗑️ Delete Session</button>
                 </div>
             </form>
         </div>
@@ -3187,6 +3199,8 @@
 
         function closeGameModal() {
             document.getElementById('game-modal').classList.remove('active');
+            document.getElementById('modal-title').textContent = 'Add New Game';
+            document.getElementById('game-delete-btn').style.display = 'none';
             currentGameTags = [];
         }
 
@@ -3335,7 +3349,6 @@
                             <button onclick="showAddSessionModal()">+ Log Session</button>
                             <button onclick="showAddDlcModal()" class="secondary">+ Add DLC</button>
                             <button onclick="editGame('${game.id}')" class="secondary">Edit Game</button>
-                            <button onclick="deleteGame('${game.id}')" class="delete-btn">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -3354,7 +3367,7 @@
                                         </div>
                                         ${dlc.notes ? `<div class="dlc-meta" style="margin-top: 5px;">${dlc.notes}</div>` : ''}
                                     </div>
-                                    <button class="dlc-delete" onclick="deleteDlc('${dlc.id}')">Delete</button>
+                                    <button class="dlc-edit" onclick="editDlc('${dlc.id}')">Edit</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -3392,7 +3405,6 @@
                                         </div>
                                         <div style="display: flex; gap: 5px; align-items: center;">
                                             <button onclick="event.stopPropagation(); editSession('${session.id}')" class="session-edit-btn" title="Edit">✏️</button>
-                                            <button onclick="event.stopPropagation(); deleteSession('${session.id}')" class="session-delete-btn" title="Delete">🗑️</button>
                                         </div>
                                     </div>
                                     ${session.progress ? `<div class="session-progress" style="color: #9ab; margin-bottom: 8px;">📊 ${session.progress}</div>` : ''}
@@ -3482,7 +3494,17 @@
             
             updateStarDisplay(game.rating || 0);
             
+            // Show delete button when editing
+            document.getElementById('game-delete-btn').style.display = 'block';
+            
             document.getElementById('game-modal').classList.add('active');
+        }
+        
+        function deleteGameFromModal() {
+            if (currentEditGameId) {
+                deleteGame(currentEditGameId);
+                closeGameModal();
+            }
         }
 
         async function deleteGame(gameId) {
@@ -3495,14 +3517,15 @@
         }
 
         function showAddDlcModal() {
+            currentEditDlcId = null;
+            document.getElementById('dlc-modal-title').textContent = 'Add DLC';
             document.getElementById('dlc-form').reset();
+            document.getElementById('dlc-delete-btn').style.display = 'none';
             document.getElementById('dlc-modal').classList.add('active');
         }
 
-        function closeDlcModal() {
-            document.getElementById('dlc-modal').classList.remove('active');
-        }
-
+        let currentEditDlcId = null; // Track which DLC is being edited
+        
         async function saveDlc(event) {
             event.preventDefault();
             
@@ -3511,19 +3534,61 @@
 
             if (!game.dlcs) game.dlcs = [];
 
-            const dlc = {
-                id: Date.now().toString(),
+            const dlcData = {
                 name: document.getElementById('dlc-name').value,
                 releaseDate: dateInputToString(document.getElementById('dlc-release-date').value),
                 price: document.getElementById('dlc-price').value,
                 notes: document.getElementById('dlc-notes').value
             };
 
-            game.dlcs.push(dlc);
+            if (currentEditDlcId) {
+                // Edit existing DLC
+                const index = game.dlcs.findIndex(d => d.id === currentEditDlcId);
+                if (index !== -1) {
+                    game.dlcs[index] = { ...game.dlcs[index], ...dlcData };
+                }
+                currentEditDlcId = null;
+            } else {
+                // Add new DLC
+                const dlc = {
+                    id: Date.now().toString(),
+                    ...dlcData
+                };
+                game.dlcs.push(dlc);
+            }
+
             await saveData();
             closeDlcModal();
             showGameDetail(currentGameId); // This refreshes the detail modal
             refreshCurrentView(); // Also refresh the main view
+        }
+        
+        function editDlc(dlcId) {
+            const game = games.find(g => g.id === currentGameId);
+            if (!game) return;
+            
+            const dlc = game.dlcs.find(d => d.id === dlcId);
+            if (!dlc) return;
+            
+            currentEditDlcId = dlcId;
+            
+            document.getElementById('dlc-modal-title').textContent = 'Edit DLC';
+            document.getElementById('dlc-name').value = dlc.name || '';
+            document.getElementById('dlc-release-date').value = dateStringToInputValue(dlc.releaseDate);
+            document.getElementById('dlc-price').value = dlc.price || '';
+            document.getElementById('dlc-notes').value = dlc.notes || '';
+            
+            // Show delete button when editing
+            document.getElementById('dlc-delete-btn').style.display = 'block';
+            
+            document.getElementById('dlc-modal').classList.add('active');
+        }
+        
+        function deleteDlcFromModal() {
+            if (currentEditDlcId) {
+                deleteDlc(currentEditDlcId);
+                closeDlcModal();
+            }
         }
 
         async function deleteDlc(dlcId) {
@@ -3536,7 +3601,14 @@
             await saveData();
             showGameDetail(currentGameId); // Refresh detail modal
             refreshCurrentView(); // Refresh main view
-            showGameDetail(currentGameId);
+        }
+        
+        function closeDlcModal() {
+            currentEditDlcId = null;
+            document.getElementById('dlc-modal-title').textContent = 'Add DLC';
+            document.getElementById('dlc-form').reset();
+            document.getElementById('dlc-delete-btn').style.display = 'none';
+            document.getElementById('dlc-modal').classList.remove('active');
         }
 
         function showAddSessionModal() {
@@ -3556,6 +3628,7 @@
             currentSessionPhotos = []; // Clear photos
             document.getElementById('session-form').reset();
             document.getElementById('session-photos-preview').innerHTML = '';
+            document.getElementById('session-delete-btn').style.display = 'none'; // Hide delete button
             document.getElementById('session-modal').classList.remove('active');
         }
 
@@ -4728,7 +4801,6 @@
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button onclick="closeSessionDetailModal(); editSession('${session.id}')" class="secondary">✏️ Edit</button>
-                            <button onclick="closeSessionDetailModal(); deleteSession('${session.id}')" style="background: #ff6b6b;">🗑️ Delete</button>
                         </div>
                     </div>
                     
@@ -4810,7 +4882,17 @@
             currentSessionPhotos = session.photos ? session.photos.slice() : [];
             renderSessionPhotosPreviews();
             
+            // Show delete button when editing
+            document.getElementById('session-delete-btn').style.display = 'block';
+            
             document.getElementById('session-modal').classList.add('active');
+        }
+        
+        function deleteSessionFromModal() {
+            if (currentEditSessionId) {
+                deleteSession(currentEditSessionId);
+                closeSessionModal();
+            }
         }
 
         async function deleteSession(sessionId) {
@@ -4958,7 +5040,6 @@
                             <div style="display: flex; gap: 8px;">
                                 <button onclick="viewList('${list.id}')" class="secondary" style="padding: 6px 12px; font-size: 0.85em;">View</button>
                                 <button onclick="editList('${list.id}')" class="secondary" style="padding: 6px 12px; font-size: 0.85em;">Edit</button>
-                                <button onclick="deleteList('${list.id}')" style="background: #ff6b6b; padding: 6px 12px; font-size: 0.85em;">Delete</button>
                             </div>
                         </div>
                         ${list.description ? `<p style="color: #678; font-size: 0.9em; margin: 10px 0 0 0;">${list.description}</p>` : ''}
@@ -4971,6 +5052,7 @@
             currentEditListId = null;
             document.getElementById('list-modal-title').textContent = 'Create New List';
             document.getElementById('list-form').reset();
+            document.getElementById('list-delete-btn').style.display = 'none';
             document.getElementById('create-list-modal').classList.add('active');
         }
         
@@ -4981,6 +5063,9 @@
         }
         
         function closeCreateListModal() {
+            currentEditListId = null;
+            document.getElementById('list-modal-title').textContent = 'Create New List';
+            document.getElementById('list-delete-btn').style.display = 'none';
             document.getElementById('create-list-modal').classList.remove('active');
         }
         
@@ -5045,7 +5130,17 @@
             document.getElementById('list-description').value = list.description || '';
             toggleListTypeHelp();
             
+            // Show delete button when editing
+            document.getElementById('list-delete-btn').style.display = 'block';
+            
             document.getElementById('create-list-modal').classList.add('active');
+        }
+        
+        function deleteListFromModal() {
+            if (currentEditListId) {
+                deleteList(currentEditListId);
+                closeCreateListModal();
+            }
         }
         
         async function deleteList(listId) {
