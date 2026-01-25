@@ -1342,6 +1342,10 @@
             box-shadow: 5px 5px 0 #ff00ff !important;
         }
         
+        body.retro-90s .game-card * {
+            color: #000 !important;
+        }
+        
         body.retro-90s .game-card:hover {
             transform: scale(1.05) rotate(2deg) !important;
         }
@@ -1349,6 +1353,15 @@
         body.retro-90s .modal-content {
             background: #00ff00 !important;
             border: 5px ridge #ff00ff !important;
+        }
+        
+        body.retro-90s .modal-content *,
+        body.retro-90s .modal-content h2,
+        body.retro-90s .modal-content h3,
+        body.retro-90s .modal-content label,
+        body.retro-90s .modal-content p,
+        body.retro-90s .modal-content div {
+            color: #000 !important;
         }
         
         body.retro-90s input, body.retro-90s select, body.retro-90s textarea {
@@ -1480,6 +1493,109 @@
         @keyframes scroll-text {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
+        }
+        
+        /* ========== RUNESCAPE THEME ========== */
+        body.osrs-mode {
+            background: #3e2723 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%234a3728" width="50" height="50"/><rect fill="%233e2723" x="50" width="50" height="50"/><rect fill="%233e2723" y="50" width="50" height="50"/><rect fill="%234a3728" x="50" y="50" width="50" height="50"/></svg>') !important;
+            font-family: "Arial", sans-serif !important;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 2 L10 8 L14 10 L18 12 L20 18 L18 24 L12 28 L8 26 L6 20 L4 14 L6 8 Z" fill="%238B4513" stroke="%23000" stroke-width="1.5"/><path d="M10 8 L14 10 L16 14" stroke="%23C0C0C0" stroke-width="2" fill="none"/></svg>'), auto !important;
+        }
+        
+        body.osrs-mode * {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M8 2 L10 8 L14 10 L18 12 L20 18 L18 24 L12 28 L8 26 L6 20 L4 14 L6 8 Z" fill="%238B4513" stroke="%23000" stroke-width="1.5"/><path d="M10 8 L14 10 L16 14" stroke="%23C0C0C0" stroke-width="2" fill="none"/></svg>'), auto !important;
+        }
+        
+        body.osrs-mode .container {
+            background: linear-gradient(to bottom, #4a3728, #3e2723) !important;
+            border: 3px solid #8b6f47 !important;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.8) !important;
+        }
+        
+        body.osrs-mode header {
+            background: linear-gradient(to bottom, #8b6f47, #6d5638) !important;
+            border: 2px solid #a89968 !important;
+            box-shadow: inset 0 1px 0 #c4b998, 0 2px 4px rgba(0,0,0,0.5) !important;
+        }
+        
+        body.osrs-mode h1, body.osrs-mode h2, body.osrs-mode h3 {
+            color: #ffff00 !important;
+            text-shadow: 2px 2px #000, -1px -1px #000, 1px -1px #000, -1px 1px #000 !important;
+            font-family: "Arial", sans-serif !important;
+        }
+        
+        body.osrs-mode button {
+            background: linear-gradient(to bottom, #8b6f47, #6d5638) !important;
+            color: #ffff00 !important;
+            border: 2px solid #a89968 !important;
+            box-shadow: inset 0 1px 0 #c4b998, 0 2px 4px rgba(0,0,0,0.5) !important;
+            text-shadow: 1px 1px #000 !important;
+            font-weight: normal !important;
+            font-family: "Arial", sans-serif !important;
+        }
+        
+        body.osrs-mode button:hover {
+            background: linear-gradient(to bottom, #a89968, #8b6f47) !important;
+            box-shadow: inset 0 1px 0 #d4c9a8, 0 2px 4px rgba(0,0,0,0.5) !important;
+        }
+        
+        body.osrs-mode .game-card {
+            background: linear-gradient(to bottom, #534333, #3e2f23) !important;
+            border: 2px solid #8b6f47 !important;
+            box-shadow: inset 0 1px 0 rgba(139,111,71,0.3), 0 2px 4px rgba(0,0,0,0.6) !important;
+        }
+        
+        body.osrs-mode .game-card * {
+            color: #ffcc00 !important;
+            text-shadow: 1px 1px #000 !important;
+        }
+        
+        body.osrs-mode .game-card .game-title {
+            color: #ffff00 !important;
+        }
+        
+        body.osrs-mode .modal-content {
+            background: linear-gradient(to bottom, #4a3728, #3e2723) !important;
+            border: 3px solid #8b6f47 !important;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.8) !important;
+        }
+        
+        body.osrs-mode .modal-content *,
+        body.osrs-mode .modal-content h2,
+        body.osrs-mode .modal-content h3 {
+            color: #ffcc00 !important;
+            text-shadow: 1px 1px #000 !important;
+        }
+        
+        body.osrs-mode input, body.osrs-mode select, body.osrs-mode textarea {
+            background: #2c1f17 !important;
+            border: 2px inset #8b6f47 !important;
+            color: #ffcc00 !important;
+            font-family: "Arial", sans-serif !important;
+        }
+        
+        body.osrs-mode .status-backlog { background: #5c4033 !important; color: #ffcc00 !important; }
+        body.osrs-mode .status-wishlist { background: #8b6f47 !important; color: #000 !important; }
+        body.osrs-mode .status-playing { background: #4a7c59 !important; color: #ffff00 !important; }
+        body.osrs-mode .status-completed { background: #6d5638 !important; color: #00ff00 !important; }
+        body.osrs-mode .status-paused { background: #8b5a3c !important; }
+        body.osrs-mode .status-dropped { background: #6d4c41 !important; }
+        
+        body.osrs-mode::before {
+            content: "⚔️ GIELINOR GAME LIBRARY ⚔️";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to right, #8b6f47, #6d5638, #8b6f47);
+            color: #ffff00;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            border-bottom: 3px solid #4a3728;
+            z-index: 9999;
+            text-shadow: 2px 2px #000, -1px -1px #000, 1px -1px #000, -1px 1px #000;
+            font-family: "Arial", sans-serif;
         }
     </style>
 </head>
@@ -1878,6 +1994,9 @@
             </p>
             <button id="retro-toggle" onclick="toggle90sMode()" style="background: none; border: none; color: #556; padding: 8px; font-size: 1.2em; cursor: pointer; margin-top: 10px; opacity: 0.3; transition: all 0.3s;" title="???">
                 🕹️
+            </button>
+            <button id="osrs-toggle" onclick="toggleOSRSMode()" style="background: none; border: none; color: #556; padding: 8px; font-size: 1.2em; cursor: pointer; margin-top: 10px; opacity: 0.3; transition: all 0.3s; margin-left: 10px;" title="???">
+                🎩
             </button>
         </footer>
     </div>
@@ -5345,9 +5464,15 @@
             retro90sMode = !retro90sMode;
             
             if (retro90sMode) {
+                // Turn off OSRS mode if active
+                if (osrsMode) {
+                    toggleOSRSMode();
+                }
+                
                 document.body.classList.add('retro-90s');
                 document.getElementById('retro-toggle').textContent = '🚀';
                 document.getElementById('retro-toggle').title = 'Back to the Future';
+                document.getElementById('retro-toggle').style.opacity = '1';
                 
                 // Set random visitor count
                 const visitorCount = Math.floor(Math.random() * 99999) + 10000;
@@ -5385,6 +5510,7 @@
                 document.body.classList.remove('retro-90s');
                 document.getElementById('retro-toggle').textContent = '🕹️';
                 document.getElementById('retro-toggle').title = '???';
+                document.getElementById('retro-toggle').style.opacity = '0.3';
                 
                 // Stop the music
                 stop90sChiptune();
@@ -5453,6 +5579,70 @@
             document.querySelectorAll('.retro-blink').forEach(badge => {
                 badge.remove();
             });
+        }
+        
+        // ========== RUNESCAPE MODE EASTER EGG ==========
+        
+        let osrsMode = false;
+        
+        function toggleOSRSMode() {
+            osrsMode = !osrsMode;
+            
+            if (osrsMode) {
+                // Turn off 90s mode if active
+                if (retro90sMode) {
+                    toggle90sMode();
+                }
+                
+                document.body.classList.add('osrs-mode');
+                document.getElementById('osrs-toggle').textContent = '⚔️';
+                document.getElementById('osrs-toggle').title = 'Leave Gielinor';
+                document.getElementById('osrs-toggle').style.opacity = '1';
+                
+                // Play OSRS-style level up sound
+                playOSRSSound();
+                
+                alert("⚔️ Welcome to Gielinor! ⚔️\n\nYou've discovered the Old School RuneScape mode!\n\nYour Game Library level is now 99!\n\n*Ding ding ding!*");
+            } else {
+                document.body.classList.remove('osrs-mode');
+                document.getElementById('osrs-toggle').textContent = '🎩';
+                document.getElementById('osrs-toggle').title = '???';
+                document.getElementById('osrs-toggle').style.opacity = '0.3';
+            }
+        }
+        
+        function playOSRSSound() {
+            // Classic OSRS level-up sound (simplified)
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Three ascending notes for level up
+                const notes = [
+                    { freq: 659.25, start: 0, duration: 0.15 },    // E5
+                    { freq: 783.99, start: 0.15, duration: 0.15 }, // G5
+                    { freq: 1046.50, start: 0.3, duration: 0.3 }   // C6
+                ];
+                
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = note.freq;
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.start);
+                    gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + note.start + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + note.start + note.duration);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + note.start);
+                    oscillator.stop(audioContext.currentTime + note.start + note.duration);
+                });
+            } catch (e) {
+                console.log('Audio not supported:', e);
+            }
         }
         
         // ========== STATS PAGE ==========
