@@ -1395,6 +1395,88 @@
             font-family: "Comic Sans MS", cursive;
         }
         
+        /* Visitor Counter */
+        body.retro-90s::after {
+            content: "👾 You are visitor #" attr(data-visitor) " 👾";
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #000;
+            color: #00ff00;
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            border-top: 3px solid #00ff00;
+            z-index: 9999;
+            font-family: "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        
+        /* Marquee container */
+        #retro-marquee {
+            position: fixed;
+            top: 30px;
+            left: 0;
+            right: 0;
+            background: #ff00ff;
+            color: #ffff00;
+            padding: 8px;
+            font-weight: bold;
+            z-index: 9998;
+            overflow: hidden;
+            border-bottom: 2px solid #000;
+            display: none;
+        }
+        
+        body.retro-90s #retro-marquee {
+            display: block;
+        }
+        
+        #retro-marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
+            white-space: nowrap;
+            font-family: "Comic Sans MS", cursive;
+            font-size: 1.1em;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        
+        /* Blink animation for NEW badges */
+        .retro-blink {
+            animation: blink-text 1s infinite;
+        }
+        
+        @keyframes blink-text {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        
+        /* Cursor trail sparkles */
+        .retro-sparkle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            font-size: 20px;
+            animation: sparkle-fade 1s ease-out forwards;
+        }
+        
+        @keyframes sparkle-fade {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.5) rotate(180deg);
+            }
+        }
+        
         @keyframes scroll-text {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
@@ -1402,6 +1484,13 @@
     </style>
 </head>
 <body>
+    <!-- Marquee Banner -->
+    <div id="retro-marquee">
+        <div id="retro-marquee-text">
+            ⭐ WELCOME TO THE MOST RADICAL GAME LIBRARY ON THE WEB!!! ⭐ CHECK OUT MY AWESOME COLLECTION!!! ⭐ DON'T FORGET TO SIGN THE GUESTBOOK!!! ⭐ POWERED BY NETSCAPE NAVIGATOR!!! ⭐
+        </div>
+    </div>
+    
     <!-- Pull to Refresh Indicator -->
     <div id="pull-to-refresh">
         <div class="refresh-icon">↻</div>
@@ -5260,6 +5349,16 @@
                 document.getElementById('retro-toggle').textContent = '🚀';
                 document.getElementById('retro-toggle').title = 'Back to the Future';
                 
+                // Set random visitor count
+                const visitorCount = Math.floor(Math.random() * 99999) + 10000;
+                document.body.setAttribute('data-visitor', visitorCount.toLocaleString());
+                
+                // Start cursor trail
+                startCursorTrail();
+                
+                // Add blinking NEW badges to recent games
+                addBlinkingBadges();
+                
                 // Play startup beep
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -5289,7 +5388,71 @@
                 
                 // Stop the music
                 stop90sChiptune();
+                
+                // Stop cursor trail
+                stopCursorTrail();
+                
+                // Remove blinking badges
+                removeBlinkingBadges();
             }
+        }
+        
+        // Cursor trail effect
+        let cursorTrailInterval = null;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        function startCursorTrail() {
+            document.addEventListener('mousemove', handleCursorTrail);
+        }
+        
+        function stopCursorTrail() {
+            document.removeEventListener('mousemove', handleCursorTrail);
+        }
+        
+        function handleCursorTrail(e) {
+            if (!retro90sMode) return;
+            
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            
+            // Create sparkle
+            const sparkles = ['⭐', '✨', '🌟', '💫', '⚡'];
+            const sparkle = document.createElement('div');
+            sparkle.className = 'retro-sparkle';
+            sparkle.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
+            sparkle.style.left = e.clientX + 'px';
+            sparkle.style.top = e.clientY + 'px';
+            document.body.appendChild(sparkle);
+            
+            // Remove after animation
+            setTimeout(() => {
+                if (sparkle.parentNode) {
+                    sparkle.parentNode.removeChild(sparkle);
+                }
+            }, 1000);
+        }
+        
+        // Blinking NEW badges
+        function addBlinkingBadges() {
+            // Add to recently added games (last 5)
+            const gameCards = document.querySelectorAll('.game-card');
+            const recentGames = Array.from(gameCards).slice(0, 5);
+            
+            recentGames.forEach(card => {
+                const badge = document.createElement('div');
+                badge.className = 'retro-blink';
+                badge.style.cssText = 'position: absolute; top: 5px; right: 5px; background: #ff0000; color: #ffff00; padding: 4px 8px; font-weight: bold; border: 2px solid #000; font-size: 0.8em; z-index: 10;';
+                badge.textContent = '🆕 NEW!';
+                card.style.position = 'relative';
+                card.appendChild(badge);
+            });
+        }
+        
+        function removeBlinkingBadges() {
+            document.querySelectorAll('.retro-blink').forEach(badge => {
+                badge.remove();
+            });
         }
         
         // ========== STATS PAGE ==========
