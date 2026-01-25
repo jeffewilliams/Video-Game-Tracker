@@ -1455,6 +1455,7 @@
         <div class="controls">
             <button onclick="showAddGameModal()">+ Add Game</button>
             <button onclick="showListsPage()" class="secondary">📋 My Lists</button>
+            <button onclick="showStatsPage()" class="secondary">📊 Stats</button>
             <button onclick="toggleBulkSelection()" class="secondary" id="bulk-select-btn">☑️ Bulk Select</button>
             <button onclick="showUpcomingReleases()" class="secondary">📅 Upcoming Releases</button>
             <button id="filter-toggle-btn" onclick="toggleFilters()" style="display: none;">🔍 Show Filters</button>
@@ -1516,6 +1517,47 @@
             <div id="single-list-view" style="display: none;">
                 <div id="list-view-header"></div>
                 <div id="list-view-games"></div>
+            </div>
+        </div>
+
+        <!-- Stats Page View -->
+        <div id="stats-page-view" style="display: none;">
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                    <button onclick="showGamesPage()" class="secondary" style="padding: 8px 12px; font-size: 0.9em;">🏠 Home</button>
+                    <span style="color: #556;">/</span>
+                    <span style="color: #9ab; font-size: 0.9em;">Stats</span>
+                </div>
+                <h2 style="color: #fff; margin: 0;">📊 Library Statistics</h2>
+            </div>
+            
+            <!-- Date Range Filters -->
+            <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <h3 style="color: #fff; margin: 0 0 15px 0; font-size: 1em;">Date Range</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button onclick="setStatsDateRange('all')" id="stats-range-all" class="secondary" style="padding: 8px 16px;">All Time</button>
+                    <button onclick="setStatsDateRange('year')" id="stats-range-year" class="secondary" style="padding: 8px 16px;">This Year</button>
+                    <button onclick="setStatsDateRange('month')" id="stats-range-month" class="secondary" style="padding: 8px 16px;">This Month</button>
+                    <button onclick="setStatsDateRange('30days')" id="stats-range-30days" class="secondary" style="padding: 8px 16px;">Last 30 Days</button>
+                </div>
+                <div style="display: grid; grid-template-columns: auto auto auto; gap: 10px; align-items: center; max-width: 600px;">
+                    <label style="color: #9ab;">From:</label>
+                    <input type="date" id="stats-date-from" style="background: #2c3440; border: 1px solid #556; color: #fff; padding: 8px; border-radius: 4px;">
+                    <span></span>
+                    <label style="color: #9ab;">To:</label>
+                    <input type="date" id="stats-date-to" style="background: #2c3440; border: 1px solid #556; color: #fff; padding: 8px; border-radius: 4px;">
+                    <button onclick="applyCustomStatsDateRange()" style="padding: 8px 16px;">Apply</button>
+                </div>
+            </div>
+            
+            <!-- Overview Cards -->
+            <div id="stats-overview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                <!-- Cards will be rendered here -->
+            </div>
+            
+            <!-- Stats Content -->
+            <div id="stats-content" style="display: grid; gap: 25px;">
+                <!-- Stats sections will be rendered here -->
             </div>
         </div>
 
@@ -4990,8 +5032,323 @@
         
         // ========== PAGE NAVIGATION ==========
         
+        // ========== STATS PAGE ==========
+        
+        let currentStatsDateRange = 'all';
+        let statsDateFrom = null;
+        let statsDateTo = null;
+        
+        function showStatsPage() {
+            // Hide other pages
+            document.getElementById('games-page-view').style.display = 'none';
+            document.getElementById('lists-page-view').style.display = 'none';
+            document.getElementById('stats-page-view').style.display = 'block';
+            
+            // Update page title
+            document.getElementById('main-title').textContent = 'Stats';
+            
+            // Default to all time
+            setStatsDateRange('all');
+        }
+        
+        function setStatsDateRange(range) {
+            currentStatsDateRange = range;
+            
+            // Update button styles
+            document.querySelectorAll('[id^="stats-range-"]').forEach(btn => {
+                btn.style.background = '#2c3440';
+                btn.style.color = '#9ab';
+            });
+            document.getElementById(`stats-range-${range}`).style.background = '#00c030';
+            document.getElementById(`stats-range-${range}`).style.color = '#fff';
+            
+            const today = new Date();
+            let fromDate = null;
+            let toDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            
+            switch(range) {
+                case 'month':
+                    fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    break;
+                case 'year':
+                    fromDate = new Date(today.getFullYear(), 0, 1);
+                    break;
+                case '30days':
+                    fromDate = new Date(today);
+                    fromDate.setDate(fromDate.getDate() - 30);
+                    break;
+                case 'all':
+                default:
+                    fromDate = null;
+                    toDate = null;
+                    break;
+            }
+            
+            statsDateFrom = fromDate;
+            statsDateTo = toDate;
+            
+            // Update date inputs
+            if (fromDate) {
+                document.getElementById('stats-date-from').value = fromDate.toISOString().split('T')[0];
+            } else {
+                document.getElementById('stats-date-from').value = '';
+            }
+            if (toDate && range !== 'all') {
+                document.getElementById('stats-date-to').value = toDate.toISOString().split('T')[0];
+            } else {
+                document.getElementById('stats-date-to').value = '';
+            }
+            
+            renderStats();
+        }
+        
+        function applyCustomStatsDateRange() {
+            const fromInput = document.getElementById('stats-date-from').value;
+            const toInput = document.getElementById('stats-date-to').value;
+            
+            if (!fromInput && !toInput) {
+                setStatsDateRange('all');
+                return;
+            }
+            
+            currentStatsDateRange = 'custom';
+            
+            // Clear preset button highlights
+            document.querySelectorAll('[id^="stats-range-"]').forEach(btn => {
+                btn.style.background = '#2c3440';
+                btn.style.color = '#9ab';
+            });
+            
+            statsDateFrom = fromInput ? new Date(fromInput + 'T00:00:00') : null;
+            statsDateTo = toInput ? new Date(toInput + 'T23:59:59') : null;
+            
+            renderStats();
+        }
+        
+        function isDateInRange(dateStr) {
+            if (!dateStr) return false;
+            if (!statsDateFrom && !statsDateTo) return true; // All time
+            
+            const date = new Date(dateStr + 'T12:00:00'); // Use noon to avoid timezone issues
+            
+            if (statsDateFrom && date < statsDateFrom) return false;
+            if (statsDateTo && date > statsDateTo) return false;
+            
+            return true;
+        }
+        
+        function renderStats() {
+            // Filter games by date range
+            const filteredGames = games.filter(game => {
+                // Check various date fields
+                return isDateInRange(game.dateAddedToLibrary) ||
+                       isDateInRange(game.dateStarted) ||
+                       isDateInRange(game.dateFinished);
+            });
+            
+            // Calculate overview stats
+            const totalGames = currentStatsDateRange === 'all' ? games.length : filteredGames.length;
+            const completedGames = games.filter(g => g.status === 'completed' && isDateInRange(g.dateFinished));
+            const playingGames = games.filter(g => g.status === 'playing');
+            
+            // Calculate total playtime from sessions
+            let totalPlaytime = 0;
+            games.forEach(game => {
+                if (game.sessions) {
+                    game.sessions.forEach(session => {
+                        if (isDateInRange(session.date) && session.duration) {
+                            totalPlaytime += parseFloat(session.duration);
+                        }
+                    });
+                }
+            });
+            
+            // Calculate total spending
+            let totalSpent = 0;
+            games.forEach(game => {
+                if (isDateInRange(game.dateAddedToLibrary) && game.price && !game.free) {
+                    totalSpent += parseFloat(game.price);
+                }
+                // Add DLC costs
+                if (game.dlcs) {
+                    game.dlcs.forEach(dlc => {
+                        if (isDateInRange(dlc.releaseDate) && dlc.price) {
+                            totalSpent += parseFloat(dlc.price);
+                        }
+                    });
+                }
+            });
+            
+            // Render overview cards
+            const overviewHTML = `
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2em; color: #00c030; font-weight: bold;">${totalGames}</div>
+                    <div style="color: #9ab; margin-top: 5px;">Total Games</div>
+                </div>
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2em; color: #4a9eff; font-weight: bold;">${completedGames.length}</div>
+                    <div style="color: #9ab; margin-top: 5px;">Completed</div>
+                </div>
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2em; color: #ffd93d; font-weight: bold;">${playingGames.length}</div>
+                    <div style="color: #9ab; margin-top: 5px;">Playing</div>
+                </div>
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2em; color: #ff6b6b; font-weight: bold;">${Math.round(totalPlaytime)}</div>
+                    <div style="color: #9ab; margin-top: 5px;">Hours Played</div>
+                </div>
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2em; color: #9b59b6; font-weight: bold;">$${totalSpent.toFixed(0)}</div>
+                    <div style="color: #9ab; margin-top: 5px;">Total Spent</div>
+                </div>
+            `;
+            
+            document.getElementById('stats-overview').innerHTML = overviewHTML;
+            
+            // Render detailed stats
+            renderDetailedStats(filteredGames, totalPlaytime);
+        }
+        
+        function renderDetailedStats(filteredGames, totalPlaytime) {
+            // Platform breakdown
+            const platformStats = {};
+            games.forEach(game => {
+                const platform = game.platform || 'Unknown';
+                if (!platformStats[platform]) {
+                    platformStats[platform] = { total: 0, completed: 0 };
+                }
+                platformStats[platform].total++;
+                if (game.status === 'completed') {
+                    platformStats[platform].completed++;
+                }
+            });
+            
+            // Status breakdown
+            const statusStats = {
+                'backlog': 0,
+                'playing': 0,
+                'completed': 0,
+                'wishlist': 0,
+                'paused': 0,
+                'dropped': 0
+            };
+            games.forEach(game => {
+                if (statusStats.hasOwnProperty(game.status)) {
+                    statusStats[game.status]++;
+                }
+            });
+            
+            // Most played games
+            const gamesWithPlaytime = games.map(game => {
+                let playtime = 0;
+                if (game.sessions) {
+                    game.sessions.forEach(session => {
+                        if (isDateInRange(session.date) && session.duration) {
+                            playtime += parseFloat(session.duration);
+                        }
+                    });
+                }
+                return { ...game, playtime };
+            }).filter(g => g.playtime > 0)
+              .sort((a, b) => b.playtime - a.playtime)
+              .slice(0, 10);
+            
+            // Recently completed
+            const recentlyCompleted = games
+                .filter(g => g.status === 'completed' && g.dateFinished)
+                .sort((a, b) => new Date(b.dateFinished) - new Date(a.dateFinished))
+                .slice(0, 10);
+            
+            const statsHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+                    <!-- Platform Breakdown -->
+                    <div style="background: #1a1f29; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: #fff; margin: 0 0 15px 0;">By Platform</h3>
+                        ${Object.entries(platformStats).map(([platform, stats]) => {
+                            const percentage = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                            return `
+                                <div style="margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="color: #fff;">${platform}</span>
+                                        <span style="color: #9ab;">${stats.completed}/${stats.total} (${percentage}%)</span>
+                                    </div>
+                                    <div style="background: #2c3440; height: 8px; border-radius: 4px; overflow: hidden;">
+                                        <div style="background: #00c030; height: 100%; width: ${percentage}%;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    <!-- Status Breakdown -->
+                    <div style="background: #1a1f29; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: #fff; margin: 0 0 15px 0;">By Status</h3>
+                        ${Object.entries(statusStats).filter(([_, count]) => count > 0).map(([status, count]) => {
+                            const percentage = Math.round((count / games.length) * 100);
+                            const statusColors = {
+                                'playing': '#4a9eff',
+                                'completed': '#00c030',
+                                'backlog': '#9ab',
+                                'wishlist': '#ffd93d',
+                                'paused': '#ff9f43',
+                                'dropped': '#ff6b6b'
+                            };
+                            return `
+                                <div style="margin-bottom: 12px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="color: #fff; text-transform: capitalize;">${status}</span>
+                                        <span style="color: #9ab;">${count} (${percentage}%)</span>
+                                    </div>
+                                    <div style="background: #2c3440; height: 8px; border-radius: 4px; overflow: hidden;">
+                                        <div style="background: ${statusColors[status]}; height: 100%; width: ${percentage}%;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <!-- Most Played Games -->
+                ${gamesWithPlaytime.length > 0 ? `
+                    <div style="background: #1a1f29; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: #fff; margin: 0 0 15px 0;">🎮 Most Played Games</h3>
+                        <div style="display: grid; gap: 10px;">
+                            ${gamesWithPlaytime.map((game, index) => `
+                                <div onclick="showGameDetail('${game.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #2c3440; border-radius: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#34404f'" onmouseout="this.style.background='#2c3440'">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="color: #556; font-weight: bold; min-width: 24px;">#${index + 1}</span>
+                                        <span style="color: #fff;">${game.title}</span>
+                                    </div>
+                                    <span style="color: #00c030; font-weight: bold;">${Math.round(game.playtime)}h</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Recently Completed -->
+                ${recentlyCompleted.length > 0 ? `
+                    <div style="background: #1a1f29; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: #fff; margin: 0 0 15px 0;">✅ Recently Completed</h3>
+                        <div style="display: grid; gap: 10px;">
+                            ${recentlyCompleted.map(game => `
+                                <div onclick="showGameDetail('${game.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #2c3440; border-radius: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#34404f'" onmouseout="this.style.background='#2c3440'">
+                                    <span style="color: #fff;">${game.title}</span>
+                                    <span style="color: #9ab; font-size: 0.9em;">${formatDateForDisplay(game.dateFinished)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('stats-content').innerHTML = statsHTML;
+        }
+        
+        
         function showListsPage() {
             document.getElementById('games-page-view').style.display = 'none';
+            document.getElementById('stats-page-view').style.display = 'none';
             document.getElementById('lists-page-view').style.display = 'block';
             document.getElementById('all-lists-view').style.display = 'block';
             document.getElementById('single-list-view').style.display = 'none';
@@ -5001,6 +5358,7 @@
         
         function showGamesPage() {
             document.getElementById('lists-page-view').style.display = 'none';
+            document.getElementById('stats-page-view').style.display = 'none';
             document.getElementById('games-page-view').style.display = 'block';
             document.getElementById('main-title').textContent = 'Game Library';
         }
