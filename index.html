@@ -512,7 +512,7 @@
             font-size: 0.85em;
         }
 
-        .session-edit-btn, .session-delete-btn {
+        .session-edit-btn {
             background: none;
             border: none;
             padding: 4px 6px;
@@ -522,7 +522,7 @@
             transition: opacity 0.2s;
         }
 
-        .session-edit-btn:hover, .session-delete-btn:hover {
+        .session-edit-btn:hover {
             opacity: 1;
         }
 
@@ -1035,9 +1035,6 @@
                 gap: 10px;
             }
 
-            .dlc-delete {
-                width: 100%;
-            }
         }
 
         /* Extra small screens */
@@ -1182,8 +1179,8 @@
             color: #678;
         }
 
-        .dlc-delete {
-            background: #ff4444;
+        .dlc-edit {
+            background: #4a9eff;
             padding: 5px 10px;
             font-size: 0.85em;
         }
@@ -1281,6 +1278,112 @@
             color: #ff4444;
             margin-top: 10px;
             font-size: 0.9em;
+        }
+        /* ========== 90s RETRO THEME ========== */
+        body.retro-90s {
+            background: #00ffff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23ff00ff" width="50" height="50"/><rect fill="%2300ffff" x="50" width="50" height="50"/><rect fill="%2300ffff" y="50" width="50" height="50"/><rect fill="%23ff00ff" x="50" y="50" width="50" height="50"/></svg>') !important;
+            font-family: "Comic Sans MS", cursive !important;
+        }
+        
+        body.retro-90s .container {
+            background: #ffff00 !important;
+            border: 5px ridge #ff00ff !important;
+            box-shadow: 10px 10px 0 #000 !important;
+        }
+        
+        body.retro-90s header {
+            background: linear-gradient(to right, #ff0000, #ff7700, #ffff00, #00ff00, #0000ff, #8b00ff) !important;
+            border: 3px solid #000 !important;
+            animation: rainbow-pulse 2s infinite !important;
+        }
+        
+        @keyframes rainbow-pulse {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(360deg); }
+        }
+        
+        body.retro-90s h1, body.retro-90s h2, body.retro-90s h3 {
+            color: #ff00ff !important;
+            text-shadow: 2px 2px #00ffff, 4px 4px #000 !important;
+            font-family: "Comic Sans MS", cursive !important;
+        }
+        
+        body.retro-90s button {
+            background: linear-gradient(to bottom, #0000ff, #000080) !important;
+            color: #ffff00 !important;
+            border: 3px outset #ffffff !important;
+            font-family: "Comic Sans MS", cursive !important;
+            text-shadow: 1px 1px #000 !important;
+            font-weight: bold !important;
+        }
+        
+        body.retro-90s button:hover {
+            background: linear-gradient(to bottom, #ff00ff, #800080) !important;
+            border: 3px inset #ffffff !important;
+        }
+        
+        body.retro-90s .game-card {
+            background: #ffffff !important;
+            border: 3px solid #000 !important;
+            box-shadow: 5px 5px 0 #ff00ff !important;
+        }
+        
+        body.retro-90s .game-card:hover {
+            transform: scale(1.05) rotate(2deg) !important;
+        }
+        
+        body.retro-90s .modal-content {
+            background: #00ff00 !important;
+            border: 5px ridge #ff00ff !important;
+        }
+        
+        body.retro-90s input, body.retro-90s select, body.retro-90s textarea {
+            background: #ffffff !important;
+            border: 3px inset #808080 !important;
+            color: #000 !important;
+            font-family: "Comic Sans MS", cursive !important;
+        }
+        
+        body.retro-90s .status-backlog { background: #ff00ff !important; }
+        body.retro-90s .status-wishlist { background: #ffff00 !important; color: #000 !important; }
+        body.retro-90s .status-playing { background: #00ff00 !important; }
+        body.retro-90s .status-completed { background: #0000ff !important; }
+        body.retro-90s .status-paused { background: #ff7700 !important; }
+        body.retro-90s .status-dropped { background: #ff0000 !important; }
+        
+        body.retro-90s #retro-toggle {
+            background: #ff00ff !important;
+            color: #ffff00 !important;
+            border: 3px solid #000 !important;
+            opacity: 1 !important;
+            animation: blink 1s infinite !important;
+        }
+        
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0.5; }
+        }
+        
+        body.retro-90s::before {
+            content: "🎮 UNDER CONSTRUCTION 🎮";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ffff00;
+            color: #000;
+            text-align: center;
+            padding: 5px;
+            font-weight: bold;
+            border-bottom: 3px solid #ff00ff;
+            z-index: 9999;
+            animation: scroll-text 10s linear infinite;
+            font-family: "Comic Sans MS", cursive;
+        }
+        
+        @keyframes scroll-text {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
     </style>
 </head>
@@ -1670,6 +1773,9 @@
             <p style="color: #678; font-size: 0.85em; margin-top: 15px;">
                 Game Library Tracker &copy; 2025
             </p>
+            <button id="retro-toggle" onclick="toggle90sMode()" style="background: none; border: none; color: #556; padding: 8px; font-size: 1.2em; cursor: pointer; margin-top: 10px; opacity: 0.3; transition: all 0.3s;" title="???">
+                🕹️
+            </button>
         </footer>
     </div>
         </div> <!-- End games-page-view -->
@@ -5032,6 +5138,44 @@
         
         // ========== PAGE NAVIGATION ==========
         
+        // ========== 90s RETRO MODE EASTER EGG ==========
+        
+        let retro90sMode = false;
+        
+        function toggle90sMode() {
+            retro90sMode = !retro90sMode;
+            
+            if (retro90sMode) {
+                document.body.classList.add('retro-90s');
+                document.getElementById('retro-toggle').textContent = '🚀';
+                document.getElementById('retro-toggle').title = 'Back to the Future';
+                
+                // Play a fun sound if possible
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.value = 0.1;
+                    
+                    oscillator.start();
+                    setTimeout(() => oscillator.stop(), 100);
+                } catch (e) {
+                    // Silent fail if audio not supported
+                }
+                
+                alert("🎮 Welcome to 1997! 🎮\n\nYou've discovered the RADICAL retro mode!\n\nWebmaster's Note: This page is best viewed in Netscape Navigator 4.0 at 800x600 resolution. Don't forget to sign my guestbook!");
+            } else {
+                document.body.classList.remove('retro-90s');
+                document.getElementById('retro-toggle').textContent = '🕹️';
+                document.getElementById('retro-toggle').title = '???';
+            }
+        }
+        
         // ========== STATS PAGE ==========
         
         let currentStatsDateRange = 'all';
@@ -5892,8 +6036,7 @@
             
             // Track export date and sync to cloud
             lastExportDate = new Date().toISOString();
-            localStorage.setItem('lastExportDate', lastExportDate);
-            saveData(); // Sync the updated lastExportDate to cloud
+            saveData(); // Sync the updated lastExportDate to cloud (includes localStorage)
             updateExportInfo();
             document.getElementById('export-reminder').style.display = 'none';
         }
