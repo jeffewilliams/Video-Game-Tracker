@@ -91,12 +91,10 @@
             border-bottom: 2px solid #00c030;
         }
         
+        /* Disable pull-to-refresh in standalone mode to avoid conflicts */
         @media (display-mode: standalone) {
             #pull-to-refresh {
-                top: 0;
-                padding-top: env(safe-area-inset-top);
-                height: calc(60px + env(safe-area-inset-top));
-                transform: translateY(calc(-60px - env(safe-area-inset-top)));
+                display: none;
             }
         }
         
@@ -125,7 +123,7 @@
         /* iOS standalone app status bar spacing */
         @media (display-mode: standalone) {
             body {
-                padding-top: env(safe-area-inset-top);
+                padding-top: max(env(safe-area-inset-top), 50px);
             }
             
             header {
@@ -137,13 +135,22 @@
             #ios-install-banner {
                 padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
             }
+            
+            /* Make sure modals also respect safe area */
+            .modal {
+                padding-top: max(env(safe-area-inset-top), 50px);
+            }
+            
+            .modal-content {
+                margin-top: 20px;
+            }
         }
         
         /* Fallback for iOS Safari in standalone mode */
         @supports (-webkit-touch-callout: none) {
             @media (display-mode: standalone) {
                 body {
-                    padding-top: max(env(safe-area-inset-top), 44px);
+                    padding-top: max(env(safe-area-inset-top), 60px);
                 }
             }
         }
@@ -394,6 +401,18 @@
             line-height: 1;
             font-weight: bold;
             z-index: 10;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Ensure close button is accessible in standalone mode */
+        @media (display-mode: standalone) {
+            .close-modal {
+                top: max(15px, calc(env(safe-area-inset-top) - 30px));
+            }
         }
 
         .close-modal:hover {
@@ -2734,68 +2753,72 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
-            // Pull-to-refresh functionality
-            let pullStartY = 0;
-            let isPulling = false;
-            const pullThreshold = 80;
-            const pullIndicator = document.getElementById('pull-to-refresh');
+            // Pull-to-refresh functionality (disabled in standalone mode)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
             
-            // Prevent default pull-to-refresh on iOS
-            let lastTouchY = 0;
-            
-            document.addEventListener('touchstart', (e) => {
-                if (window.scrollY === 0 || window.pageYOffset === 0) {
-                    pullStartY = e.touches[0].clientY;
-                    lastTouchY = e.touches[0].clientY;
-                    isPulling = true;
-                }
-            }, { passive: false });
-            
-            document.addEventListener('touchmove', (e) => {
-                const touchY = e.touches[0].clientY;
+            if (!isStandalone) {
+                let pullStartY = 0;
+                let isPulling = false;
+                const pullThreshold = 80;
+                const pullIndicator = document.getElementById('pull-to-refresh');
                 
-                if (isPulling) {
+                // Prevent default pull-to-refresh on iOS
+                let lastTouchY = 0;
+                
+                document.addEventListener('touchstart', (e) => {
+                    if (window.scrollY === 0 || window.pageYOffset === 0) {
+                        pullStartY = e.touches[0].clientY;
+                        lastTouchY = e.touches[0].clientY;
+                        isPulling = true;
+                    }
+                }, { passive: false });
+                
+                document.addEventListener('touchmove', (e) => {
+                    const touchY = e.touches[0].clientY;
+                    
+                    if (isPulling) {
+                        const pullDistance = touchY - pullStartY;
+                        
+                        // Only activate if pulling down from top
+                        if (pullDistance > 0 && (window.scrollY === 0 || window.pageYOffset === 0)) {
+                            // Prevent default iOS bounce/refresh
+                            if (pullDistance > 10) {
+                                e.preventDefault();
+                            }
+                            
+                            if (pullDistance > pullThreshold) {
+                                pullIndicator.classList.add('pulling');
+                                pullIndicator.querySelector('span').textContent = 'Release to refresh...';
+                            } else {
+                                pullIndicator.querySelector('span').textContent = 'Pull down to refresh...';
+                            }
+                        } else {
+                            isPulling = false;
+                        }
+                    }
+                    
+                    lastTouchY = touchY;
+                }, { passive: false });
+                
+                document.addEventListener('touchend', async (e) => {
+                    if (!isPulling) return;
+                    
+                    const touchY = e.changedTouches[0].clientY;
                     const pullDistance = touchY - pullStartY;
                     
-                    // Only activate if pulling down from top
-                    if (pullDistance > 0 && (window.scrollY === 0 || window.pageYOffset === 0)) {
-                        // Prevent default iOS bounce/refresh
-                        if (pullDistance > 10) {
-                            e.preventDefault();
-                        }
+                    if (pullDistance > pullThreshold && (window.scrollY === 0 || window.pageYOffset === 0)) {
+                        pullIndicator.querySelector('span').textContent = 'Refreshing...';
                         
-                        if (pullDistance > pullThreshold) {
-                            pullIndicator.classList.add('pulling');
-                            pullIndicator.querySelector('span').textContent = 'Release to refresh...';
-                        } else {
-                            pullIndicator.querySelector('span').textContent = 'Pull down to refresh...';
-                        }
+                        // Reload the page
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        window.location.reload();
                     } else {
-                        isPulling = false;
+                        pullIndicator.classList.remove('pulling');
                     }
-                }
-                
-                lastTouchY = touchY;
-            }, { passive: false });
-            
-            document.addEventListener('touchend', async (e) => {
-                if (!isPulling) return;
-                
-                const touchY = e.changedTouches[0].clientY;
-                const pullDistance = touchY - pullStartY;
-                
-                if (pullDistance > pullThreshold && (window.scrollY === 0 || window.pageYOffset === 0)) {
-                    pullIndicator.querySelector('span').textContent = 'Refreshing...';
                     
-                    // Reload the page
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    window.location.reload();
-                } else {
-                    pullIndicator.classList.remove('pulling');
-                }
-                
-                isPulling = false;
-            }, { passive: false });
+                    isPulling = false;
+                }, { passive: false });
+            }
             
             // Detect iOS Safari and show install banner
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
