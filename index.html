@@ -2163,6 +2163,15 @@
                     <label>Notes</label>
                     <textarea id="game-notes" placeholder="Your thoughts about this game..."></textarea>
                 </div>
+                
+                <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #2c3440;">
+                    <button type="button" onclick="openReviewModal()" class="secondary" style="width: 100%; padding: 12px; font-size: 1em;">
+                        📝 Reviews & Journal Entry
+                    </button>
+                    <small style="color: #678; display: block; margin-top: 8px; text-align: center;">
+                        Detailed ratings, reviews, reflections, and more
+                    </small>
+                </div>
 
                 <div style="display: flex; gap: 10px; justify-content: space-between; align-items: center;">
                     <div style="display: flex; gap: 10px;">
@@ -2170,6 +2179,210 @@
                         <button type="button" class="secondary" onclick="closeGameModal()">Cancel</button>
                     </div>
                     <button type="button" id="game-delete-btn" onclick="deleteGameFromModal()" style="background: #ff6b6b; display: none;">🗑️ Delete Game</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Review & Journal Modal -->
+    <div id="review-modal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <button class="close-modal" onclick="closeReviewModal()">×</button>
+            <h2 style="color: #fff; margin-bottom: 10px;">📝 Reviews & Journal</h2>
+            <p style="color: #9ab; margin-bottom: 25px; font-size: 0.9em;">
+                <span id="review-game-title" style="color: #00c030; font-weight: 600;"></span>
+            </p>
+            
+            <form id="review-form" onsubmit="saveReview(event)">
+                <!-- Detailed Ratings Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">⭐ Detailed Ratings</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Gameplay</label>
+                            <div class="star-rating" id="rating-gameplay">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin: 0;">
+                            <label>Story</label>
+                            <div class="star-rating" id="rating-story">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin: 0;">
+                            <label>Graphics/Art</label>
+                            <div class="star-rating" id="rating-graphics">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin: 0;">
+                            <label>Sound/Music</label>
+                            <div class="star-rating" id="rating-sound">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin: 0; grid-column: 1 / -1;">
+                            <label>Replayability</label>
+                            <div class="star-rating" id="rating-replayability">
+                                <span class="star" data-rating="1">★</span>
+                                <span class="star" data-rating="2">★</span>
+                                <span class="star" data-rating="3">★</span>
+                                <span class="star" data-rating="4">★</span>
+                                <span class="star" data-rating="5">★</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Initial Thoughts Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">💭 First Impressions</h3>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Initial Thoughts (When You Started)</label>
+                        <textarea id="review-initial-thoughts" placeholder="What were your first impressions? What caught your attention? What made you want to play this?" rows="4"></textarea>
+                        <small style="color: #678; display: block; margin-top: 5px;">Record your expectations and first hours with the game</small>
+                    </div>
+                </div>
+                
+                <!-- Playing Review Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">🎮 While Playing Review</h3>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Ongoing Thoughts & Impressions</label>
+                        <textarea id="review-playing" placeholder="How's it going so far? What are you enjoying? What's frustrating? Any standout moments?" rows="5"></textarea>
+                        <small style="color: #678; display: block; margin-top: 5px;">Update this as you play - your thoughts mid-journey</small>
+                    </div>
+                </div>
+                
+                <!-- Final Review Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">🏁 Final Review</h3>
+                    <div class="form-group" style="margin: 0;">
+                        <label>Final Thoughts & Complete Review</label>
+                        <textarea id="review-final" placeholder="Your complete thoughts after finishing or putting down the game. Overall experience? Did it meet expectations? Would you play it again?" rows="6"></textarea>
+                        <small style="color: #678; display: block; margin-top: 5px;">Write your complete review after completing or abandoning the game</small>
+                    </div>
+                </div>
+                
+                <!-- Pros & Cons Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">✅ ❌ Pros & Cons</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="color: #00c030; font-weight: 600; margin-bottom: 8px; display: block;">✅ What Worked</label>
+                            <div id="pros-list" style="margin-bottom: 10px; min-height: 32px;"></div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="pro-input" placeholder="Add a pro..." style="flex: 1;">
+                                <button type="button" onclick="addPro()" class="secondary">Add</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label style="color: #ff6b6b; font-weight: 600; margin-bottom: 8px; display: block;">❌ What Didn't</label>
+                            <div id="cons-list" style="margin-bottom: 10px; min-height: 32px;"></div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="con-input" placeholder="Add a con..." style="flex: 1;">
+                                <button type="button" onclick="addCon()" class="secondary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Questions Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">❓ Quick Assessment</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Would You Recommend This?</label>
+                            <select id="review-recommend">
+                                <option value="">Not answered</option>
+                                <option value="yes">👍 Yes, definitely</option>
+                                <option value="maybe">🤔 Maybe, depends on taste</option>
+                                <option value="no">👎 No, would not recommend</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" style="margin: 0;">
+                            <label>Was It Worth the Price?</label>
+                            <select id="review-worth-price">
+                                <option value="">Not answered</option>
+                                <option value="yes">💰 Yes, great value</option>
+                                <option value="fair">✅ Fair price</option>
+                                <option value="no">❌ Overpriced</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Memorable Moments Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">🌟 Memorable Moments</h3>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Best Moment / Highlight</label>
+                        <textarea id="review-best-moment" placeholder="What was the most memorable, exciting, or satisfying moment?" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin: 0;">
+                        <label>Worst Moment / Low Point</label>
+                        <textarea id="review-worst-moment" placeholder="What was the most frustrating, boring, or disappointing part?" rows="3"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Reflections Section -->
+                <div style="background: #1a1f29; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1em;">🤔 Deeper Reflections</h3>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>What Did This Game Teach You?</label>
+                        <textarea id="reflection-learned" placeholder="Any skills, perspectives, or insights you gained from playing?" rows="3"></textarea>
+                        <small style="color: #678; display: block; margin-top: 5px;">About gaming, life, a subject, yourself, etc.</small>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>How Did It Make You Feel?</label>
+                        <textarea id="reflection-feel" placeholder="What emotions did this game evoke? How did it affect your mood or mindset?" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>How Does It Compare?</label>
+                        <textarea id="reflection-compare" placeholder="How does it stack up against similar games you've played?" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin: 0;">
+                        <label>Reflection After Time Has Passed</label>
+                        <textarea id="reflection-later" placeholder="Coming back to this later - how do you feel about it now? Has your perspective changed?" rows="3"></textarea>
+                        <small style="color: #678; display: block; margin-top: 5px;">Update this field months or years later to capture how your view evolved</small>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="secondary" onclick="closeReviewModal()">Cancel</button>
+                    <button type="submit">💾 Save Review & Journal</button>
                 </div>
             </form>
         </div>
@@ -3009,7 +3222,30 @@
                 cover: game.cover || '',
                 addedDate: game.addedDate || new Date().toISOString(),
                 sessions: game.sessions || [],
-                dlcs: game.dlcs || []
+                dlcs: game.dlcs || [],
+                // Review/Journal fields
+                detailedRatings: game.detailedRatings || {
+                    gameplay: 0,
+                    story: 0,
+                    graphics: 0,
+                    sound: 0,
+                    replayability: 0
+                },
+                initialThoughts: game.initialThoughts || '',
+                playingReview: game.playingReview || '',
+                finalReview: game.finalReview || '',
+                pros: game.pros || [],
+                cons: game.cons || [],
+                wouldRecommend: game.wouldRecommend || null,
+                bestMoment: game.bestMoment || '',
+                worstMoment: game.worstMoment || '',
+                worthThePrice: game.worthThePrice || null,
+                reflections: game.reflections || {
+                    whatILearned: '',
+                    howItMadeMeFeel: '',
+                    compareToSimilar: '',
+                    oneYearLater: ''
+                }
             };
         }
 
@@ -3471,6 +3707,241 @@
             currentGameTags = [];
         }
 
+        // ========== REVIEW & JOURNAL MODAL ==========
+        
+        let currentReviewGameId = null;
+        let currentPros = [];
+        let currentCons = [];
+        
+        function openReviewModal() {
+            // Get the game ID from the current editing game
+            if (!currentEditGameId) {
+                alert('Please save the game first before adding reviews.');
+                return;
+            }
+            
+            const game = games.find(g => g.id === currentEditGameId);
+            if (!game) return;
+            
+            currentReviewGameId = currentEditGameId;
+            document.getElementById('review-game-title').textContent = game.title;
+            
+            // Load existing review data
+            loadReviewData(game);
+            
+            // Setup star rating inputs
+            setupReviewStarRatings();
+            
+            document.getElementById('review-modal').classList.add('active');
+        }
+        
+        function closeReviewModal() {
+            document.getElementById('review-modal').classList.remove('active');
+            currentReviewGameId = null;
+            currentPros = [];
+            currentCons = [];
+        }
+        
+        function loadReviewData(game) {
+            // Load detailed ratings
+            if (game.detailedRatings) {
+                updateReviewStarDisplay('gameplay', game.detailedRatings.gameplay || 0);
+                updateReviewStarDisplay('story', game.detailedRatings.story || 0);
+                updateReviewStarDisplay('graphics', game.detailedRatings.graphics || 0);
+                updateReviewStarDisplay('sound', game.detailedRatings.sound || 0);
+                updateReviewStarDisplay('replayability', game.detailedRatings.replayability || 0);
+            }
+            
+            // Load text fields
+            document.getElementById('review-initial-thoughts').value = game.initialThoughts || '';
+            document.getElementById('review-playing').value = game.playingReview || '';
+            document.getElementById('review-final').value = game.finalReview || '';
+            document.getElementById('review-best-moment').value = game.bestMoment || '';
+            document.getElementById('review-worst-moment').value = game.worstMoment || '';
+            
+            // Load select fields
+            document.getElementById('review-recommend').value = game.wouldRecommend || '';
+            document.getElementById('review-worth-price').value = game.worthThePrice || '';
+            
+            // Load reflections
+            if (game.reflections) {
+                document.getElementById('reflection-learned').value = game.reflections.whatILearned || '';
+                document.getElementById('reflection-feel').value = game.reflections.howItMadeMeFeel || '';
+                document.getElementById('reflection-compare').value = game.reflections.compareToSimilar || '';
+                document.getElementById('reflection-later').value = game.reflections.oneYearLater || '';
+            }
+            
+            // Load pros and cons
+            currentPros = game.pros ? [...game.pros] : [];
+            currentCons = game.cons ? [...game.cons] : [];
+            renderProsAndCons();
+        }
+        
+        function setupReviewStarRatings() {
+            const categories = ['gameplay', 'story', 'graphics', 'sound', 'replayability'];
+            
+            categories.forEach(category => {
+                const container = document.getElementById(`rating-${category}`);
+                const stars = container.querySelectorAll('.star');
+                
+                stars.forEach(star => {
+                    star.addEventListener('click', function() {
+                        const rating = parseInt(this.dataset.rating);
+                        const currentRating = getCurrentReviewRating(category);
+                        
+                        // Toggle: if clicking same rating, clear it
+                        if (rating === currentRating) {
+                            updateReviewStarDisplay(category, 0);
+                        } else {
+                            updateReviewStarDisplay(category, rating);
+                        }
+                    });
+                });
+            });
+        }
+        
+        function getCurrentReviewRating(category) {
+            const container = document.getElementById(`rating-${category}`);
+            const activeStars = container.querySelectorAll('.star.active');
+            return activeStars.length;
+        }
+        
+        function updateReviewStarDisplay(category, rating) {
+            const container = document.getElementById(`rating-${category}`);
+            const stars = container.querySelectorAll('.star');
+            
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+        
+        function addPro() {
+            const input = document.getElementById('pro-input');
+            const value = input.value.trim();
+            
+            if (value) {
+                currentPros.push(value);
+                input.value = '';
+                renderProsAndCons();
+            }
+        }
+        
+        function addCon() {
+            const input = document.getElementById('con-input');
+            const value = input.value.trim();
+            
+            if (value) {
+                currentCons.push(value);
+                input.value = '';
+                renderProsAndCons();
+            }
+        }
+        
+        function removePro(index) {
+            currentPros.splice(index, 1);
+            renderProsAndCons();
+        }
+        
+        function removeCon(index) {
+            currentCons.splice(index, 1);
+            renderProsAndCons();
+        }
+        
+        function renderProsAndCons() {
+            const prosList = document.getElementById('pros-list');
+            const consList = document.getElementById('cons-list');
+            
+            prosList.innerHTML = currentPros.map((pro, index) => `
+                <div style="background: #2c3440; padding: 8px 12px; border-radius: 4px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #9ab;">✓ ${pro}</span>
+                    <button type="button" onclick="removePro(${index})" style="background: none; border: none; color: #ff6b6b; cursor: pointer; padding: 0 8px; font-size: 1.2em;">×</button>
+                </div>
+            `).join('');
+            
+            consList.innerHTML = currentCons.map((con, index) => `
+                <div style="background: #2c3440; padding: 8px 12px; border-radius: 4px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #9ab;">✗ ${con}</span>
+                    <button type="button" onclick="removeCon(${index})" style="background: none; border: none; color: #ff6b6b; cursor: pointer; padding: 0 8px; font-size: 1.2em;">×</button>
+                </div>
+            `).join('');
+            
+            if (currentPros.length === 0) {
+                prosList.innerHTML = '<div style="color: #678; font-style: italic; padding: 8px;">No pros added yet</div>';
+            }
+            if (currentCons.length === 0) {
+                consList.innerHTML = '<div style="color: #678; font-style: italic; padding: 8px;">No cons added yet</div>';
+            }
+        }
+        
+        async function saveReview(event) {
+            event.preventDefault();
+            
+            if (!currentReviewGameId) return;
+            
+            const gameIndex = games.findIndex(g => g.id === currentReviewGameId);
+            if (gameIndex === -1) return;
+            
+            // Gather all review data
+            games[gameIndex].detailedRatings = {
+                gameplay: getCurrentReviewRating('gameplay'),
+                story: getCurrentReviewRating('story'),
+                graphics: getCurrentReviewRating('graphics'),
+                sound: getCurrentReviewRating('sound'),
+                replayability: getCurrentReviewRating('replayability')
+            };
+            
+            games[gameIndex].initialThoughts = document.getElementById('review-initial-thoughts').value;
+            games[gameIndex].playingReview = document.getElementById('review-playing').value;
+            games[gameIndex].finalReview = document.getElementById('review-final').value;
+            games[gameIndex].pros = [...currentPros];
+            games[gameIndex].cons = [...currentCons];
+            games[gameIndex].wouldRecommend = document.getElementById('review-recommend').value;
+            games[gameIndex].worthThePrice = document.getElementById('review-worth-price').value;
+            games[gameIndex].bestMoment = document.getElementById('review-best-moment').value;
+            games[gameIndex].worstMoment = document.getElementById('review-worst-moment').value;
+            
+            games[gameIndex].reflections = {
+                whatILearned: document.getElementById('reflection-learned').value,
+                howItMadeMeFeel: document.getElementById('reflection-feel').value,
+                compareToSimilar: document.getElementById('reflection-compare').value,
+                oneYearLater: document.getElementById('reflection-later').value
+            };
+            
+            await saveData();
+            closeReviewModal();
+            
+            // Show success message
+            alert('Review & journal entry saved successfully!');
+        }
+        
+        // Add Enter key support for pros/cons
+        document.addEventListener('DOMContentLoaded', function() {
+            const proInput = document.getElementById('pro-input');
+            const conInput = document.getElementById('con-input');
+            
+            if (proInput) {
+                proInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addPro();
+                    }
+                });
+            }
+            
+            if (conInput) {
+                conInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addCon();
+                    }
+                });
+            }
+        });
+
         async function saveGame(event) {
             event.preventDefault();
             
@@ -3542,6 +4013,36 @@
                 console.error('Error in saveGame:', error);
                 alert('Error saving game: ' + error.message);
             }
+        }
+        
+        function hasReviewData(game) {
+            if (!game) return false;
+            
+            // Check if any review/journal fields have data
+            if (game.initialThoughts || game.playingReview || game.finalReview) return true;
+            if (game.bestMoment || game.worstMoment) return true;
+            if (game.wouldRecommend || game.worthThePrice) return true;
+            if (game.pros && game.pros.length > 0) return true;
+            if (game.cons && game.cons.length > 0) return true;
+            
+            // Check detailed ratings
+            if (game.detailedRatings) {
+                if (game.detailedRatings.gameplay > 0 || game.detailedRatings.story > 0 || 
+                    game.detailedRatings.graphics > 0 || game.detailedRatings.sound > 0 || 
+                    game.detailedRatings.replayability > 0) {
+                    return true;
+                }
+            }
+            
+            // Check reflections
+            if (game.reflections) {
+                if (game.reflections.whatILearned || game.reflections.howItMadeMeFeel || 
+                    game.reflections.compareToSimilar || game.reflections.oneYearLater) {
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         function showGameDetail(gameId) {
@@ -3619,6 +4120,108 @@
                         </div>
                     </div>
                 </div>
+                
+                ${hasReviewData(game) ? `
+                <div class="sessions-section" style="background: #1a1f29; padding: 25px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #fff; margin-bottom: 20px;">📝 Reviews & Journal</h3>
+                    
+                    ${game.detailedRatings && (game.detailedRatings.gameplay > 0 || game.detailedRatings.story > 0 || game.detailedRatings.graphics > 0 || game.detailedRatings.sound > 0 || game.detailedRatings.replayability > 0) ? `
+                    <div style="background: #14181c; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                        <h4 style="color: #9ab; font-size: 0.95em; margin-bottom: 12px;">Detailed Ratings</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                            ${game.detailedRatings.gameplay > 0 ? `<div><span style="color: #678;">Gameplay:</span> <span style="color: #ff8800;">${'★'.repeat(game.detailedRatings.gameplay)}</span></div>` : ''}
+                            ${game.detailedRatings.story > 0 ? `<div><span style="color: #678;">Story:</span> <span style="color: #ff8800;">${'★'.repeat(game.detailedRatings.story)}</span></div>` : ''}
+                            ${game.detailedRatings.graphics > 0 ? `<div><span style="color: #678;">Graphics:</span> <span style="color: #ff8800;">${'★'.repeat(game.detailedRatings.graphics)}</span></div>` : ''}
+                            ${game.detailedRatings.sound > 0 ? `<div><span style="color: #678;">Sound:</span> <span style="color: #ff8800;">${'★'.repeat(game.detailedRatings.sound)}</span></div>` : ''}
+                            ${game.detailedRatings.replayability > 0 ? `<div><span style="color: #678;">Replayability:</span> <span style="color: #ff8800;">${'★'.repeat(game.detailedRatings.replayability)}</span></div>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${game.initialThoughts ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #00c030; font-size: 0.95em; margin-bottom: 8px;">💭 First Impressions</h4>
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px; color: #9ab; white-space: pre-wrap;">${game.initialThoughts}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${game.playingReview ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #4a9eff; font-size: 0.95em; margin-bottom: 8px;">🎮 While Playing</h4>
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px; color: #9ab; white-space: pre-wrap;">${game.playingReview}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${game.finalReview ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #9b59b6; font-size: 0.95em; margin-bottom: 8px;">🏁 Final Review</h4>
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px; color: #9ab; white-space: pre-wrap;">${game.finalReview}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${(game.pros && game.pros.length > 0) || (game.cons && game.cons.length > 0) ? `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        ${game.pros && game.pros.length > 0 ? `
+                        <div>
+                            <h4 style="color: #00c030; font-size: 0.95em; margin-bottom: 8px;">✅ Pros</h4>
+                            <div style="background: #14181c; padding: 12px; border-radius: 6px;">
+                                ${game.pros.map(pro => `<div style="color: #9ab; margin-bottom: 6px;">• ${pro}</div>`).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${game.cons && game.cons.length > 0 ? `
+                        <div>
+                            <h4 style="color: #ff6b6b; font-size: 0.95em; margin-bottom: 8px;">❌ Cons</h4>
+                            <div style="background: #14181c; padding: 12px; border-radius: 6px;">
+                                ${game.cons.map(con => `<div style="color: #9ab; margin-bottom: 6px;">• ${con}</div>`).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                    
+                    ${game.wouldRecommend || game.worthThePrice ? `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        ${game.wouldRecommend ? `
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px;">
+                            <span style="color: #678; font-size: 0.9em;">Recommend?</span><br>
+                            <span style="color: #fff; font-weight: 600;">${game.wouldRecommend === 'yes' ? '👍 Yes, definitely' : game.wouldRecommend === 'maybe' ? '🤔 Maybe' : '👎 No'}</span>
+                        </div>
+                        ` : ''}
+                        ${game.worthThePrice ? `
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px;">
+                            <span style="color: #678; font-size: 0.9em;">Worth the price?</span><br>
+                            <span style="color: #fff; font-weight: 600;">${game.worthThePrice === 'yes' ? '💰 Great value' : game.worthThePrice === 'fair' ? '✅ Fair price' : '❌ Overpriced'}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                    
+                    ${game.bestMoment ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #ffd93d; font-size: 0.95em; margin-bottom: 8px;">🌟 Best Moment</h4>
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px; color: #9ab; white-space: pre-wrap;">${game.bestMoment}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${game.worstMoment ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #ff6b6b; font-size: 0.95em; margin-bottom: 8px;">💢 Worst Moment</h4>
+                        <div style="background: #14181c; padding: 12px; border-radius: 6px; color: #9ab; white-space: pre-wrap;">${game.worstMoment}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${game.reflections && (game.reflections.whatILearned || game.reflections.howItMadeMeFeel || game.reflections.compareToSimilar || game.reflections.oneYearLater) ? `
+                    <div style="background: #14181c; padding: 15px; border-radius: 6px;">
+                        <h4 style="color: #9ab; font-size: 0.95em; margin-bottom: 12px;">🤔 Reflections</h4>
+                        ${game.reflections.whatILearned ? `<div style="margin-bottom: 12px;"><span style="color: #678; font-size: 0.85em;">What I learned:</span><div style="color: #9ab; margin-top: 4px;">${game.reflections.whatILearned}</div></div>` : ''}
+                        ${game.reflections.howItMadeMeFeel ? `<div style="margin-bottom: 12px;"><span style="color: #678; font-size: 0.85em;">How it made me feel:</span><div style="color: #9ab; margin-top: 4px;">${game.reflections.howItMadeMeFeel}</div></div>` : ''}
+                        ${game.reflections.compareToSimilar ? `<div style="margin-bottom: 12px;"><span style="color: #678; font-size: 0.85em;">Compared to similar games:</span><div style="color: #9ab; margin-top: 4px;">${game.reflections.compareToSimilar}</div></div>` : ''}
+                        ${game.reflections.oneYearLater ? `<div><span style="color: #678; font-size: 0.85em;">Looking back:</span><div style="color: #9ab; margin-top: 4px;">${game.reflections.oneYearLater}</div></div>` : ''}
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
 
                 <div class="sessions-section">
                     <h3>DLC & Expansions (${dlcCount})</h3>
