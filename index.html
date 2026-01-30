@@ -4542,13 +4542,32 @@
                 return;
             }
             
+            // Get dismissed releases from localStorage
+            const dismissedReleases = JSON.parse(localStorage.getItem('dismissedReleases') || '[]');
+            
+            // Filter out dismissed games
+            const activeWishlistGames = wishlistGames.filter(game => !dismissedReleases.includes(game.id));
+            
+            if (activeWishlistGames.length === 0) {
+                document.getElementById('upcoming-content').innerHTML = `
+                    <p style="color: #678; text-align: center; padding: 40px;">
+                        No upcoming releases to show. All notifications have been dismissed.
+                    </p>
+                    <div style="text-align: center;">
+                        <button onclick="clearDismissedReleases()" class="secondary">Show All Releases Again</button>
+                    </div>
+                `;
+                document.getElementById('upcoming-modal').classList.add('active');
+                return;
+            }
+            
             // Sort by release date (soonest first)
-            wishlistGames.sort((a, b) => new Date(a.releaseDate) - new Date(b.releaseDate));
+            activeWishlistGames.sort((a, b) => new Date(a.releaseDate) - new Date(b.releaseDate));
             
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             
-            const upcomingHtml = wishlistGames.map(game => {
+            const upcomingHtml = activeWishlistGames.map(game => {
                 // Parse date string without timezone conversion
                 const [year, month, day] = game.releaseDate.split('-');
                 const releaseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -4570,11 +4589,11 @@
                 }
                 
                 return `
-                    <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #1a1f29; border-radius: 8px; margin-bottom: 15px; cursor: pointer;" onclick="showGameDetail('${game.id}')">
-                        <div style="width: 80px; height: 110px; flex-shrink: 0; background: #2c3440; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #1a1f29; border-radius: 8px; margin-bottom: 15px; position: relative;">
+                        <div style="width: 80px; height: 110px; flex-shrink: 0; background: #2c3440; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="showGameDetail('${game.id}')">
                             ${game.cover ? `<img src="${game.cover}" alt="${game.title}" style="width: 100%; height: 100%; object-fit: cover;">` : '<span style="font-size: 40px;">🎮</span>'}
                         </div>
-                        <div style="flex: 1;">
+                        <div style="flex: 1; cursor: pointer;" onclick="showGameDetail('${game.id}')">
                             <h3 style="margin: 0 0 8px 0; color: #fff;">${game.title}</h3>
                             <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                                 <span style="color: #9ab;"><strong>${formatDateForDisplay(game.releaseDate)}</strong></span>
@@ -4583,12 +4602,38 @@
                                 ${game.price ? `<span style="color: #678;">• $${parseFloat(game.price).toFixed(2)}</span>` : ''}
                             </div>
                         </div>
+                        ${isPast || isToday ? `
+                        <button onclick="dismissRelease('${game.id}')" style="position: absolute; top: 10px; right: 10px; background: #2c3440; border: none; color: #678; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;" onmouseover="this.style.background='#ff6b6b'; this.style.color='#fff'" onmouseout="this.style.background='#2c3440'; this.style.color='#678'" title="Dismiss this notification">
+                            ✕ Dismiss
+                        </button>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
             
             document.getElementById('upcoming-content').innerHTML = upcomingHtml;
             document.getElementById('upcoming-modal').classList.add('active');
+        }
+        
+        function dismissRelease(gameId) {
+            // Add to dismissed list
+            const dismissedReleases = JSON.parse(localStorage.getItem('dismissedReleases') || '[]');
+            if (!dismissedReleases.includes(gameId)) {
+                dismissedReleases.push(gameId);
+                localStorage.setItem('dismissedReleases', JSON.stringify(dismissedReleases));
+            }
+            
+            // Refresh the modal
+            showUpcomingReleases();
+            
+            // Update the notification badge
+            checkUpcomingReleases();
+        }
+        
+        function clearDismissedReleases() {
+            localStorage.removeItem('dismissedReleases');
+            showUpcomingReleases();
+            checkUpcomingReleases();
         }
 
         function closeUpcomingModal() {
@@ -4627,6 +4672,12 @@
             const wishlistGames = games.filter(g => g.status === 'wishlist' && g.releaseDate);
             if (wishlistGames.length === 0) return;
 
+            // Get dismissed releases
+            const dismissedReleases = JSON.parse(localStorage.getItem('dismissedReleases') || '[]');
+            
+            // Filter out dismissed games
+            const activeWishlistGames = wishlistGames.filter(game => !dismissedReleases.includes(game.id));
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const nextWeek = new Date(today);
@@ -4635,7 +4686,7 @@
             let upcomingCount = 0;
             let releasingToday = [];
 
-            wishlistGames.forEach(game => {
+            activeWishlistGames.forEach(game => {
                 const releaseDate = new Date(game.releaseDate);
                 releaseDate.setHours(0, 0, 0, 0);
                 const daysUntil = Math.ceil((releaseDate - today) / (1000 * 60 * 60 * 24));
